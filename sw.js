@@ -1,16 +1,10 @@
-const CACHE="loadmaster-ai-v5.40-normal-first";
+const CACHE="loadmaster-ai-v5.41-normal-first";
 const ASSETS=[
-  "./index.html?v=5.40",
-  "./styles.css?v=5.40",
-  "./app.js?v=5.40",
+  "./index.html?v=5.41",
+  "./styles.css?v=5.41",
+  "./app.js?v=5.41",
   "./manifest.webmanifest",
-  "./icon.svg",
-  "./optimizer.js",
-  "./geometry.js",
-  "./collision.js",
-  "./refine.js",
-  "./scoring.js",
-  "./validator.js"
+  "./icon.svg"
 ];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -24,9 +18,9 @@ self.addEventListener("fetch", event => {
   if(request.mode === "navigate") {
     event.respondWith(fetch(request, {cache:"no-store"}).then(response => {
       const copy=response.clone();
-      caches.open(CACHE).then(cache=>cache.put("./index.html?v=5.40", copy));
+      caches.open(CACHE).then(cache=>cache.put("./index.html?v=5.41", copy));
       return response;
-    }).catch(()=>caches.match("./index.html?v=5.40")));
+    }).catch(()=>caches.match("./index.html?v=5.41")));
     return;
   }
   event.respondWith(fetch(request).then(response => {

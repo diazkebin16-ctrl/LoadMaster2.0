@@ -129,8 +129,8 @@ function intelligentSolutionRank(sol,trailer,best=null){
   const used=Math.max(0,Number(sol.used)||Geometry.usedLength(sol.stacks||[]));
   const moved=Math.max(0,Number(sol.moved)||0),rotated=Math.max(0,Number(sol.rotated)||0);
   const total=Math.max(1,(sol.stacks||[]).length+pendingStacks);
-  const completion=pendingStacks===0?48:Math.max(0,42-pendingPallets*5-pendingStacks*3);
-  const utilization=efficiency*0.24;
+  const completion=pendingStacks===0?60:Math.max(0,35-pendingPallets*6-pendingStacks*8);
+  const utilization=efficiency*0.18;
   const lengthQuality=Math.max(0,10*(1-used/Math.max(1,trailer.length)));
   const stability=Math.max(0,8-(moved/total)*5-(rotated/total)*2);
   const compactness=Math.max(0,7-Math.min(7,(Number(sol.score)||0)/2500));
@@ -1679,49 +1679,54 @@ function normalizeLibraryItem(raw={}){
     return opts.filter(o=>o.w<=base.w+EPS&&o.l<=base.l+EPS).sort((a,b)=>(base.w*base.l-a.w*a.l)-(base.w*base.l-b.w*b.l))[0]||null;
   }
   function buildStackingFirstLoad(placedInput,pendingInput,library=[],profile='balanced'){
-    const groups=originalStackGroups(placedInput,pendingInput,library).map(g=>({...g,remaining:g.qty}));
-    const mixed=[];
-    const upperOrder=[...groups].sort((a,b)=>a.w*a.l-b.w*b.l||a.maxHeight-b.maxHeight);
-    let guard=0;
-    while(guard++<500){
-      let choice=null;
-      for(const upper of upperOrder){
-        if(upper.remaining<=0)continue;
-        for(const base of groups){
-          if(base===upper||base.remaining<=0||base.w*base.l+EPS<upper.w*upper.l)continue;
-          const orientation=upperFitsBase(upper,base);if(!orientation)continue;
-          const limit=Math.min(base.maxHeight,upper.maxHeight);if(limit<2)continue;
-          const waste=base.w*base.l-orientation.w*orientation.l;
-          const score=(profile==='tight'?waste:0)+(profile==='large-base'?-base.w*base.l*.001:0)+(profile==='small-first'?upper.w*upper.l*.001:0);
-          if(!choice||score<choice.score)choice={base,upper,orientation,limit,score};
-        }
+    // v5.41: forma primero las pilas normales y solo después combina sobrantes.
+    // Esto evita crear mezclas arbitrarias y descubre casos como 5 de 145×26
+    // abajo + 5 de 120×24 arriba, reduciendo una posición de piso.
+    const groups=originalStackGroups(placedInput,pendingInput,library);
+    const full=[];
+    for(const g of groups){
+      let remaining=Math.max(0,Math.round(Number(g.qty)||0));
+      while(remaining>0){
+        const take=Math.min(remaining,g.maxHeight);
+        full.push({id:uid(),sourceKey:g.key,name:g.name,w:g.w,l:g.l,qty:take,maxHeight:g.maxHeight,type:g.type,category:g.category,canRotate:g.canRotate,locked:false,rotated:false,x:0,y:0});
+        remaining-=take;
       }
-      if(!choice)break;
-      const {base,upper,orientation,limit}=choice;
-      let desiredUpper;
-      if(profile==='upper-heavy')desiredUpper=limit-1;
-      else if(profile==='base-heavy')desiredUpper=Math.max(1,Math.floor(limit/3));
-      else desiredUpper=Math.max(1,Math.floor(limit/2));
-      let upperQty=Math.min(upper.remaining,desiredUpper,limit-1);
-      let baseQty=Math.min(base.remaining,limit-upperQty);
-      if(baseQty<1){baseQty=1;upperQty=Math.min(upper.remaining,limit-1);}
-      if(baseQty+upperQty<2||baseQty>base.remaining||upperQty<1)break;
-      base.remaining-=baseQty;upper.remaining-=upperQty;
+    }
+    const complete=full.filter(s=>(Number(s.qty)||1)>=(Number(s.maxHeight)||1));
+    const partial=full.filter(s=>(Number(s.qty)||1)<(Number(s.maxHeight)||1));
+    const mixed=[];
+    const used=new Set();
+    const candidates=[];
+    for(let bi=0;bi<partial.length;bi++)for(let ui=0;ui<partial.length;ui++){
+      if(bi===ui)continue;
+      const base=partial[bi],upper=partial[ui];
+      const orientation=upperFitsBase(upper,base);if(!orientation)continue;
+      const limit=Math.min(Number(base.maxHeight)||1,Number(upper.maxHeight)||1);
+      const total=(Number(base.qty)||1)+(Number(upper.qty)||1);
+      if(total>limit)continue;
+      const positionsSaved=1;
+      const fillRatio=total/Math.max(1,limit);
+      const footprintWaste=base.w*base.l-orientation.w*orientation.l;
+      const exactBonus=Math.abs(total-limit)<EPS?100000:0;
+      const profileBonus=profile==='tight'?-footprintWaste:profile==='large-base'?base.w*base.l:0;
+      const score=exactBonus+positionsSaved*10000+fillRatio*1000-footprintWaste+profileBonus*.01;
+      candidates.push({bi,ui,base,upper,orientation,limit,total,score});
+    }
+    candidates.sort((a,b)=>b.score-a.score||b.base.w*b.base.l-a.base.w*a.base.l);
+    for(const c of candidates){
+      if(used.has(c.bi)||used.has(c.ui))continue;
+      used.add(c.bi);used.add(c.ui);
       mixed.push({
-        id:uid(),name:`${base.name} + ${upper.name}`,w:base.w,l:base.l,qty:baseQty+upperQty,maxHeight:limit,
-        type:base.type,category:base.category,canRotate:false,locked:false,rotated:false,stackMode:'mixed',stackLimit:limit,mixedStacking:true,
+        id:uid(),name:`${c.base.name} + ${c.upper.name}`,w:c.base.w,l:c.base.l,qty:c.total,maxHeight:c.limit,
+        type:c.base.type,category:c.base.category,canRotate:false,locked:false,rotated:false,stackMode:'mixed',stackLimit:c.limit,mixedStacking:true,
         layers:[
-          {id:uid(),sourceKey:base.key,name:base.name,w:base.w,l:base.l,qty:baseQty,maxHeight:base.maxHeight,type:base.type,canRotate:base.canRotate,category:base.category},
-          {id:uid(),sourceKey:upper.key,name:upper.name,w:orientation.w,l:orientation.l,qty:upperQty,maxHeight:upper.maxHeight,type:upper.type,canRotate:upper.canRotate,category:upper.category,rotated:orientation.rotated}
+          {id:c.base.id,sourceKey:c.base.sourceKey,name:c.base.name,w:c.base.w,l:c.base.l,qty:c.base.qty,maxHeight:c.base.maxHeight,type:c.base.type,canRotate:c.base.canRotate,category:c.base.category},
+          {id:c.upper.id,sourceKey:c.upper.sourceKey,name:c.upper.name,w:c.orientation.w,l:c.orientation.l,qty:c.upper.qty,maxHeight:c.upper.maxHeight,type:c.upper.type,canRotate:c.upper.canRotate,category:c.upper.category,rotated:c.orientation.rotated}
         ],x:0,y:0
       });
     }
-    const normals=[];
-    for(const g of groups){
-      let n=g.remaining;
-      while(n>0){const take=Math.min(n,g.maxHeight);normals.push({id:uid(),name:g.name,w:g.w,l:g.l,qty:take,maxHeight:g.maxHeight,type:g.type,category:g.category,canRotate:g.canRotate,locked:false,rotated:false,x:0,y:0});n-=take;}
-    }
-    return [...mixed,...normals];
+    const leftovers=partial.filter((_,i)=>!used.has(i));
+    return [...mixed,...complete,...leftovers];
   }
 
   function prestackMergePlan(placedInput,pendingInput,library=[],trailer={width:96,length:628}){
@@ -1885,7 +1890,7 @@ function normalizeLibraryItem(raw={}){
     constructor(){
       this.store=new Store(); this.patternMemory=new PatternMemory(); this.strategyMemory=new StrategyMemory(); this.visualHistory=new VisualHistoryMemory(); this.installPrompt=null; this.lastSolutions=[]; this.referenceImage=null; this.editingPatternId=null; this.lastOptimizationMs=0; this.lastWinningStrategy="Manual / sin optimizar"; this.currentOptimizationSessionId=null; this.selectedHistoryIds=new Set(); this.manualEditMode=false; this.progressiveSession=null; this.pendingProgressiveImprovement=null; this.photoReaderFile=null; this.photoReaderDataUrl=""; this.photoReaderItems=[]; this.lastStackingResult=null; this.hasOptimized=false;
       this.bind(); this.syncTrailerInputs(); this.restoreAccordionState(); this.render();
-      if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js?v=5.40", { updateViaCache: "none" }).then(reg=>reg.update()).catch(()=>{});
+      if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js?v=5.41", { updateViaCache: "none" }).then(reg=>reg.update()).catch(()=>{});
     }
     get state(){return this.store.state;}
     toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2100);}
@@ -2100,7 +2105,7 @@ function normalizeLibraryItem(raw={}){
     duplicateCatalogItem(id){const source=this.state.library.find(x=>String(x.id)===String(id));if(!source)return;const copy=normalizeLibraryItem({...clone(source),id:uid(),name:`${source.name} copia`,favorite:false});this.state.library.push(copy);this.store.persistLibrary();this.renderLibrary();this.renderCatalog();this.toast("Pallet duplicado");}
     deleteCatalogItem(id){const item=this.state.library.find(x=>String(x.id)===String(id));if(!item)return;if(!confirm(`¿Eliminar “${item.name}” del catálogo? Los archivos y patrones ya guardados conservarán sus propios datos.`))return;this.state.library=this.state.library.filter(x=>String(x.id)!==String(id));this.store.persistLibrary();this.renderLibrary();this.renderCatalog();this.toast("Pallet eliminado");}
     toggleCatalogFavorite(id){const item=this.state.library.find(x=>String(x.id)===String(id));if(!item)return;item.favorite=!item.favorite;this.store.persistLibrary();this.renderLibrary();this.renderCatalog();}
-    exportCatalog(){const blob=new Blob([JSON.stringify({version:"5.40",type:"loadmaster-pallet-catalog",library:this.state.library},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="loadmaster-catalogo-pallets.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);this.toast("Catálogo exportado");}
+    exportCatalog(){const blob=new Blob([JSON.stringify({version:"5.41",type:"loadmaster-pallet-catalog",library:this.state.library},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="loadmaster-catalogo-pallets.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);this.toast("Catálogo exportado");}
     async importCatalog(e){const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());const incoming=Array.isArray(data)?data:data.library;if(!Array.isArray(incoming))throw new Error();const normalized=incoming.map(normalizeLibraryItem).filter(x=>x.w>0&&x.l>0);const byKey=new Map(this.state.library.map(x=>[`${x.name}|${x.l}|${x.w}`,x]));for(const item of normalized){const key=`${item.name}|${item.l}|${item.w}`;if(byKey.has(key))Object.assign(byKey.get(key),item,{id:byKey.get(key).id});else this.state.library.push({...item,id:uid()});}this.store.persistLibrary();this.renderLibrary();this.renderCatalog();this.toast(`${normalized.length} pallets importados o actualizados`);}catch{this.toast("Catálogo no válido");}e.target.value="";}
     renderCatalog(){this.renderLibrary();}
 
@@ -2242,8 +2247,8 @@ function normalizeLibraryItem(raw={}){
     renderPending(){
       const root=$("pendingList"),count=$("pendingCount");if(!root||!count)return;
       const pending=this.state.pending||[];count.textContent=pending.length;root.innerHTML="";const stackBtn=$("stackAssistBtn");const total=(this.state.stacks||[]).length+pending.length;if(stackBtn)stackBtn.disabled=this.hasOptimized?!pending.length:total<2;
-      if(!pending.length){root.innerHTML='<div class="pendingEmpty">No hay pilas pendientes.</div>';const status=$("stackingStatus");if(status)status.textContent=this.hasOptimized?"La carga no tiene pendientes para apilar.":(total>=2?"Puedes preparar pilas mixtas antes de pulsar Optimización IA.":"Agrega al menos dos pilas para preparar apilamiento.");return;}
-      {const status=$("stackingStatus");if(status)status.textContent=this.hasOptimized?"La carga normal dejó pendientes. Puedes usar Buscar apilamiento como segundo recurso.":"Puedes preparar pilas mixtas antes de pulsar Optimización IA.";}
+      if(!pending.length){root.innerHTML='<div class="pendingEmpty">No hay pilas pendientes.</div>';const status=$("stackingStatus");if(status)status.textContent=this.hasOptimized?"La carga no tiene pendientes para apilar.":(total>=2?"El optimizador buscará automáticamente pilas mixtas compatibles antes de acomodar.":"Agrega al menos dos pilas para preparar apilamiento.");return;}
+      {const status=$("stackingStatus");if(status)status.textContent=this.hasOptimized?"La optimización automática dejó pendientes. Puedes usar Buscar apilamiento para intentar una reconstrucción adicional.":"El optimizador buscará automáticamente pilas mixtas compatibles antes de acomodar.";}
       pending.forEach(s=>{const row=document.createElement("div");row.className="pendingItem";row.innerHTML=`<div><strong>${s.name}</strong><small>${s.w}×${s.l} · ${s.qty||1} pallets · máx ${libraryMaxHeightFor(s,this.state.library)} · ${s.type}</small></div><button type="button" data-edit>Editar</button>`;row.querySelector("[data-edit]").onclick=()=>this.editPending(s.id);root.appendChild(row);});
     }
     editPending(id){
@@ -2286,7 +2291,7 @@ function normalizeLibraryItem(raw={}){
       const saved=this.filterAndSortHistory(this.visualHistory.saved,false),recent=this.filterAndSortHistory(this.visualHistory.recent,true);$('savedHistoryCount').textContent=`(${saved.length})`;$('recentHistoryCount').textContent=`(${recent.length})`;renderList($('savedHistoryList'),this.visualHistory.saved,false);renderList($('recentHistoryList'),this.visualHistory.recent,true);this.updateHistorySelectionToolbar();this.updateHistorySummary();
     }
     createHistoryReportCanvas(entry){
-      const stacks=entry.stacks||[],pending=entry.pending||[],trailer=entry.trailer||{width:96,length:628},info=calculateEfficiencyIndicator(stacks,pending,trailer),canvas=document.createElement('canvas');canvas.width=1240;canvas.height=1754;const ctx=canvas.getContext('2d');ctx.fillStyle='#f3f4f6';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#111827';ctx.fillRect(0,0,canvas.width,170);ctx.fillStyle='#fff';ctx.font='700 46px system-ui, sans-serif';ctx.fillText('LOADMASTER AI',70,72);ctx.font='23px system-ui, sans-serif';ctx.fillText(entry.name||'Reporte de carga',70,118);ctx.textAlign='right';ctx.font='19px system-ui, sans-serif';ctx.fillText(new Date(entry.updatedAt||entry.createdAt).toLocaleString('es-MX'),1170,94);ctx.textAlign='left';ctx.fillStyle='#fff';ctx.strokeStyle='#d1d5db';ctx.lineWidth=2;ctx.fillRect(55,205,1130,300);ctx.strokeRect(55,205,1130,300);ctx.fillStyle='#111827';ctx.font='700 31px system-ui, sans-serif';ctx.fillText(`Eficiencia ${info.score.toFixed(1)}% · ${info.label}`,85,260);ctx.font='21px system-ui, sans-serif';const rows=[[`Tráiler`,`${trailer.length}" × ${trailer.width}"`],[`Carga`,`${stacks.length} pilas · ${info.loaded} pallets`],[`Pendientes`,`${info.left}`],[`Ocupación`,`${info.utilization.toFixed(1)}%`],[`Área usada`,`${Math.round(info.usedArea).toLocaleString('es-MX')} in²`],[`Largo usado`,`${info.usedLength.toFixed(1)}"`],[`Tiempo`,entry.optimizationMs?`${(entry.optimizationMs/1000).toFixed(1)} s`:'—'],[`Estrategia`,entry.strategy||'Manual']];rows.forEach((row,i)=>{const col=i%2,x=85+col*555,y=310+Math.floor(i/2)*48;ctx.fillStyle='#6b7280';ctx.fillText(`${row[0]}:`,x,y);ctx.fillStyle='#111827';ctx.fillText(String(row[1]),x+190,y);});const plan=createPlanCanvas(stacks,trailer,{title:'Plano de carga'}),maxW=1080,maxH=1120,scale=Math.min(maxW/plan.width,maxH/plan.height),w=plan.width*scale,h=plan.height*scale,x=(canvas.width-w)/2,y=555+(maxH-h)/2;ctx.fillStyle='#fff';ctx.fillRect(55,535,1130,1160);ctx.strokeStyle='#d1d5db';ctx.strokeRect(55,535,1130,1160);ctx.drawImage(plan,x,y,w,h);ctx.fillStyle='#6b7280';ctx.font='17px system-ui, sans-serif';ctx.textAlign='center';ctx.fillText('Reporte automático del historial · LoadMaster AI v5.32',620,1730);return canvas;
+      const stacks=entry.stacks||[],pending=entry.pending||[],trailer=entry.trailer||{width:96,length:628},info=calculateEfficiencyIndicator(stacks,pending,trailer),canvas=document.createElement('canvas');canvas.width=1240;canvas.height=1754;const ctx=canvas.getContext('2d');ctx.fillStyle='#f3f4f6';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#111827';ctx.fillRect(0,0,canvas.width,170);ctx.fillStyle='#fff';ctx.font='700 46px system-ui, sans-serif';ctx.fillText('LOADMASTER AI',70,72);ctx.font='23px system-ui, sans-serif';ctx.fillText(entry.name||'Reporte de carga',70,118);ctx.textAlign='right';ctx.font='19px system-ui, sans-serif';ctx.fillText(new Date(entry.updatedAt||entry.createdAt).toLocaleString('es-MX'),1170,94);ctx.textAlign='left';ctx.fillStyle='#fff';ctx.strokeStyle='#d1d5db';ctx.lineWidth=2;ctx.fillRect(55,205,1130,300);ctx.strokeRect(55,205,1130,300);ctx.fillStyle='#111827';ctx.font='700 31px system-ui, sans-serif';ctx.fillText(`Eficiencia ${info.score.toFixed(1)}% · ${info.label}`,85,260);ctx.font='21px system-ui, sans-serif';const rows=[[`Tráiler`,`${trailer.length}" × ${trailer.width}"`],[`Carga`,`${stacks.length} pilas · ${info.loaded} pallets`],[`Pendientes`,`${info.left}`],[`Ocupación`,`${info.utilization.toFixed(1)}%`],[`Área usada`,`${Math.round(info.usedArea).toLocaleString('es-MX')} in²`],[`Largo usado`,`${info.usedLength.toFixed(1)}"`],[`Tiempo`,entry.optimizationMs?`${(entry.optimizationMs/1000).toFixed(1)} s`:'—'],[`Estrategia`,entry.strategy||'Manual']];rows.forEach((row,i)=>{const col=i%2,x=85+col*555,y=310+Math.floor(i/2)*48;ctx.fillStyle='#6b7280';ctx.fillText(`${row[0]}:`,x,y);ctx.fillStyle='#111827';ctx.fillText(String(row[1]),x+190,y);});const plan=createPlanCanvas(stacks,trailer,{title:'Plano de carga'}),maxW=1080,maxH=1120,scale=Math.min(maxW/plan.width,maxH/plan.height),w=plan.width*scale,h=plan.height*scale,x=(canvas.width-w)/2,y=555+(maxH-h)/2;ctx.fillStyle='#fff';ctx.fillRect(55,535,1130,1160);ctx.strokeStyle='#d1d5db';ctx.strokeRect(55,535,1130,1160);ctx.drawImage(plan,x,y,w,h);ctx.fillStyle='#6b7280';ctx.font='17px system-ui, sans-serif';ctx.textAlign='center';ctx.fillText('Reporte automático del historial · LoadMaster AI v5.41',620,1730);return canvas;
     }
     exportHistoryEntriesPdf(entries){try{const valid=(entries||[]).slice(0,10);if(!valid.length)return this.toast('Selecciona al menos una carga');const blob=canvasesToPdfBlob(valid.map(e=>this.createHistoryReportCanvas(e))),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`loadmaster-reportes-${new Date().toISOString().slice(0,10)}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1800);this.toast(`${valid.length} reporte${valid.length===1?'':'s'} exportado${valid.length===1?'':'s'} en PDF`);}catch(error){this.toast(error.message||'No se pudieron crear los reportes');}}
     exportSelectedHistoryPdf(){this.exportHistoryEntriesPdf(this.getSelectedHistoryEntries());}
@@ -2371,13 +2376,17 @@ function normalizeLibraryItem(raw={}){
       const allInput=[...this.state.stacks,...(this.state.pending||[])];
       if(!allInput.length)return this.toast("No hay pilas");
       $("optimizerPanel").hidden=false;$("optimizerSummary").textContent="Buscando una primera solución rápida…";$("optimizerResults").innerHTML="";this.updateProgressiveStatus("Preparando optimización progresiva…",true);
-      const original=clone(allInput),beforeUsed=Geometry.usedLength(this.state.stacks),baselineStats={loaded:this.state.stacks.reduce((n,s)=>n+(Number(s.qty)||1),0),left:(this.state.pending||[]).reduce((n,s)=>n+(Number(s.qty)||1),0),used:beforeUsed};
+      const rawOriginal=clone(allInput),beforeUsed=Geometry.usedLength(this.state.stacks),baselineStats={loaded:this.state.stacks.reduce((n,s)=>n+(Number(s.qty)||1),0),left:(this.state.pending||[]).reduce((n,s)=>n+(Number(s.qty)||1),0),used:beforeUsed};
+      const stackedFirst=buildStackingFirstLoad(rawOriginal,[],this.state.library,"balanced");
+      const original=stackedFirst.length<rawOriginal.length?stackedFirst:rawOriginal;
+      const autoMixed=original.filter(s=>Array.isArray(s.layers)&&s.layers.length>1).length;
+      if(autoMixed){this.lastStackingResult={mode:"automatic-before-optimize",beforeCount:rawOriginal.length,afterCount:original.length,mixedCount:autoMixed};$("optimizerSummary").textContent=`Apilamiento automático: ${rawOriginal.length} → ${original.length} pilas. Buscando acomodo…`;}
       this.strategyMemory.prepare(original,this.state.trailer);
       setTimeout(()=>{
         const fast=new LoadEngine(this.state.trailer,{timeLimitMs:3200,patterns:this.patternMemory.patterns,strategies:this.strategyMemory.items});const report=fast.optimize(original);
         if(!report.ok||!report.solutions?.length){this.updateProgressiveStatus("No se encontró una solución válida.",false);$("optimizerSummary").textContent=report.message||"No se encontró una solución válida";this.toast(report.message||"No se pudo optimizar");return;}
         const best=report.solutions[0],validation=validateLayout(best.stacks,this.state.trailer);if(!validation.ok){this.updateProgressiveStatus("La solución rápida no pasó la validación.",false);return this.toast("La solución rápida no fue válida");}
-        this.lastOptimizationMs=performance.now()-optimizationStarted;this.lastWinningStrategy=best.family||"Solución rápida";this.lastSolutions=report.solutions;this.lastUnplaced=clone(best.unplaced||[]);this.store.remember();this.state.stacks=clone(best.stacks);this.state.pending=clone(best.unplaced||[]);this.hasOptimized=true;this.render();this.renderSolutions(report.solutions,beforeUsed);
+        this.lastOptimizationMs=performance.now()-optimizationStarted;this.lastWinningStrategy=(autoMixed?"Apilado automático + ":"")+(best.family||"Solución rápida");this.lastSolutions=report.solutions;this.lastUnplaced=clone(best.unplaced||[]);this.store.remember();this.state.stacks=clone(best.stacks);this.state.pending=clone(best.unplaced||[]);this.hasOptimized=true;this.render();this.renderSolutions(report.solutions,beforeUsed);
         const leftText=best.unplacedStacks?` · ${best.unplacedStacks} pila${best.unplacedStacks===1?'':'s'} pendientes (${best.unplacedPallets} pallets)`:' · Toda la carga quedó dentro';
         $("optimizerSummary").textContent=`Primera solución: ${best.loadedStacks} pilas / ${best.loadedPallets} pallets · ${(best.efficiency||0).toFixed(1)}% eficiencia${leftText}`;
         if(!best.unplacedStacks){this.updateProgressiveStatus("Solución completa encontrada en la fase rápida.",false);$("stopProgressiveBtn").hidden=true;this.strategyMemory.recordOutcome(original,this.state.trailer,best,"optimización adaptativa",baselineStats);this.patternMemory.learnComplete(best.stacks,this.state.trailer);this.recordRecentOptimization();this.toast("Toda la carga quedó acomodada");return;}
@@ -2405,7 +2414,7 @@ function normalizeLibraryItem(raw={}){
       add("48×40",48,40,0,0);add("48×40",48,40,48,0);add("42×42",42,42,0,42);add("42×42",42,42,54,42);add("Pila desviada",42,42,49,90);
       this.hasOptimized=false;this.syncTrailerInputs();this.render();
     }
-    saveFile(){const blob=new Blob([JSON.stringify({version:"5.40",...this.state},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="loadmaster-carga-v5.32.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+    saveFile(){const blob=new Blob([JSON.stringify({version:"5.41",...this.state},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="loadmaster-carga-v5.41.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
     saveImage(){
       if(!this.state.stacks.length)return this.toast("No hay una carga para guardar como imagen");
       const validation=validateLayout(this.state.stacks,this.state.trailer);
@@ -2527,7 +2536,7 @@ function normalizeLibraryItem(raw={}){
 
 
 
-// v5.40: apilamiento previo y posterior con reducción real del conteo de pilas
+// v5.41: apilamiento previo y posterior con reducción real del conteo de pilas
 (function initThemeController(){
   const STORAGE_KEY="loadmaster-theme";
   const root=document.documentElement;
