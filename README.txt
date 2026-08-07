@@ -1,17 +1,19 @@
-Pallet Operations Platform Prototype v0.6
+Pallet Operations — Prototipo funcional v0.7
 
-PALLET OPERATIONS — PROTOTIPO v0.6
+Cambios principales de esta versión:
+- Nuevo módulo "Órdenes" en el menú principal.
+- Nueva orden en 2 pasos: datos administrativos + descripción técnica del pallet.
+- Número interno automático y número de orden del cliente opcional.
+- Plantillas reutilizables por cliente / diseño.
+- Inventario de madera separado por largo y calidad #1–#4 (#1 es la mejor).
+- El usuario ya no selecciona manualmente 8/10/12/16 ft para la orden.
+- Planificador automático de material: compara existencias disponibles, calidad requerida y desperdicio lineal.
+- Si el inventario no alcanza, la orden se bloquea antes de reservar material.
+- Runners con calidad requerida.
+- Parte superior e inferior admiten varios tipos de tabla (1x4 / 1x6), cada uno con cantidad y calidad.
+- "Altura máx. inicial" cambió a "Máximo por pila en LoadMaster".
+- LoadMaster AI v5.58 permanece integrado y recibe automáticamente medida/cantidad/altura/giro.
 
-Cambios principales:
-- Preparación de carga por orden con tabla de medidas.
-- Cantidades llegan automáticamente y quedan bloqueadas.
-- Altura máxima y giro son editables antes de optimizar.
-- Ancho/largo del tráiler editables en preparación.
-- LoadMaster AI v5.58 abre como página completa, no en modal.
-- LoadMaster recibe la orden por localStorage en el mismo origen y crea las pilas automáticamente.
-- Botón Volver a Carga dentro de LoadMaster.
+IMPORTANTE: el optimizador de corte de v0.7 es un prototipo lineal para validar el flujo y la selección automática desde inventario. La lógica industrial completa de corte y aprovechamiento de remanentes se seguirá refinando por etapas.
 
-Para GitHub Pages: subir TODOS los archivos de esta carpeta al mismo nivel.
-
-
-v0.6: Nueva orden en 2 pasos, número interno consecutivo automático, orden del cliente opcional, plantillas técnicas reutilizables, cálculo provisional de material y planificación anticipada en LoadMaster desde el momento de crear la orden.
+Para GitHub Pages: subir TODOS los archivos del ZIP al mismo nivel.
