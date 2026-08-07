@@ -104,7 +104,7 @@ function openLoadOrder(id){const o=orderById(id);const pickup=o.shipping==='pick
 }
 function completeDelivery(id){const o=orderById(id);completeOrder(o,(o.evidence||'Salida registrada')+' + entrega confirmada')}
 function completeOrder(o,evidence){const f=findFinished(o.palletSku);f.qty=Math.max(0,f.qty-o.qty);f.reserved=Math.max(0,f.reserved-o.qty);state.history.unshift({id:o.id,customer:o.customer,shipping:o.shipping,completed:'Hoy',evidence:evidence||'Registro completado'});state.orders=state.orders.filter(x=>x.id!==o.id);addNote(`Orden #${o.id}: completada y enviada al historial.`);save();closeDialog();toast('Orden completada → Historial.');render()}
-function openLoadMaster(){openDialog('LoadMaster AI v5.58','Motor de optimización integrado dentro del módulo Carga.',`<iframe class="loadmaster-frame" src="modules/carga/loadmaster/index.html" title="LoadMaster AI"></iframe><div class="dialog-actions"><button class="btn secondary" value="cancel">Cerrar</button></div>`)}
+function openLoadMaster(){openDialog('LoadMaster AI v5.58','Motor de optimización integrado dentro del módulo Carga.',`<iframe class="loadmaster-frame" src="loadmaster.html" title="LoadMaster AI"></iframe><div class="dialog-actions"><button class="btn secondary" value="cancel">Cerrar</button></div>`)}
 
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));
 document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));

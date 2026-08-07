@@ -38,3 +38,6 @@ Luego abra http://localhost:8000/
 
 Nota
 Los datos son ficticios. No modifica sistemas reales ni inventario de fábrica.
+
+
+v0.3: LoadMaster fue aplanado al directorio principal para evitar errores 404 en GitHub Pages al subir desde teléfono. Abra index.html; el botón LoadMaster usa loadmaster.html.
