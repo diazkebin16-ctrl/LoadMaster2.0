@@ -555,3 +555,9 @@ html[data-theme="dark"] .photoReviewTable td{
 
 /* v5.51: controles de velocidad y progreso */
 .optimizationModeRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,auto);gap:.45rem .75rem;align-items:center;margin:.75rem 0 1rem}.optimizationModeRow select{width:100%;border:1px solid var(--border,#334155);border-radius:.75rem;padding:.65rem .8rem;background:var(--panel,#111827);color:inherit}.optimizationModeRow small{grid-column:1/-1;opacity:.75}.optimizationElapsed{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;opacity:.8}@media(max-width:520px){.optimizationModeRow{grid-template-columns:1fr}}
+
+
+/* Integración Pallet Operations v0.5 */
+.platformIntegrationBar{position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:12px;padding:8px 12px;background:#0d5c4a;color:#fff;border-bottom:1px solid rgba(255,255,255,.18)}
+.platformIntegrationBar[hidden]{display:none}.platformIntegrationBar button{background:#fff;color:#0d5c4a;border:0;border-radius:9px;padding:8px 11px;font-weight:800;cursor:pointer}.platformIntegrationBar div{display:grid;gap:1px;min-width:0}.platformIntegrationBar strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.platformIntegrationBar small{color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:640px){.platformIntegrationBar{align-items:flex-start}.platformIntegrationBar button{flex:0 0 auto}.platformIntegrationBar small{white-space:normal}}

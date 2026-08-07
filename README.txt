@@ -1,48 +1,12 @@
-PALLET OPERATIONS — PROTOTIPO FUNCIONAL POR ETAPAS v0.2
+PALLET OPERATIONS — PROTOTIPO v0.5
 
-Objetivo
-Este prototipo no pretende ser la plataforma final. Sirve para probar la arquitectura y, sobre todo, cómo una misma orden se mueve entre módulos.
+Cambios principales:
+- Preparación de carga por orden con tabla de medidas.
+- Cantidades llegan automáticamente y quedan bloqueadas.
+- Altura máxima y giro son editables antes de optimizar.
+- Ancho/largo del tráiler editables en preparación.
+- LoadMaster AI v5.58 abre como página completa, no en modal.
+- LoadMaster recibe la orden por localStorage en el mismo origen y crea las pilas automáticamente.
+- Botón Volver a Carga dentro de LoadMaster.
 
-Qué se puede probar
-1. Inventario de madera
-   - Recibir madera.
-   - Ver existencia, reservado y disponible.
-2. Producción / Corte
-   - Crear una orden nueva.
-   - Reservar madera disponible.
-   - Bloquear el corte si no alcanza el inventario.
-   - Marcar material listo y enviar aviso a Fabricación.
-3. Fabricación
-   - Iniciar fabricación.
-   - Terminar pallets.
-   - Actualizar inventario terminado y mandar la orden a Carga.
-4. Carga y despacho
-   - Ver tipos de despacho por color.
-   - Abrir LoadMaster AI v5.58 integrado.
-   - Marcar cargando.
-   - Adjuntar una foto opcional (por ejemplo, factura firmada).
-   - Registrar firma/nombre.
-   - Para recogida del cliente: completar y enviar a Historial.
-   - Para envío de fábrica: marcar En tránsito y luego Entregado.
-5. Historial
-   - Ver pedidos completados.
-   - Cambiar el plazo de retención de ejemplo (30/60/90 días).
-6. Persistencia
-   - Los cambios se guardan en localStorage del navegador.
-   - Botón ↺ restablece la demostración.
-
-Cómo abrir
-Abra index.html en un navegador moderno. Para que el iframe de LoadMaster funcione de forma más confiable, puede servir la carpeta con un servidor HTTP local, por ejemplo:
-python3 -m http.server 8000
-Luego abra http://localhost:8000/
-
-Nota
-Los datos son ficticios. No modifica sistemas reales ni inventario de fábrica.
-
-
-v0.3: LoadMaster fue aplanado al directorio principal para evitar errores 404 en GitHub Pages al subir desde teléfono. Abra index.html; el botón LoadMaster usa loadmaster.html.
-
-v0.4 FIX LOADMASTER EMBEDDED
-- Corregido choque de nombres entre styles.css/app.js de la plataforma y LoadMaster.
-- LoadMaster ahora usa lm-styles.css y lm-app.js.
-- Se desactiva el service worker dentro del iframe para evitar conflictos de caché/scope en GitHub Pages.
+Para GitHub Pages: subir TODOS los archivos de esta carpeta al mismo nivel.

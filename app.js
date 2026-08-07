@@ -1,4 +1,5 @@
-const STORAGE='palletOpsPrototypeV02';
+const STORAGE='palletOpsPrototypeV05';
+const LM_HANDOFF='palletOpsLoadmasterHandoff';
 const initialState={
   settings:{historyDays:60},
   lumber:[
@@ -11,8 +12,18 @@ const initialState={
     {id:'22421',customer:'Warehouse One',product:'40×48',qty:220,due:'Mañana',shipping:'factory',stage:'waiting_material',wood:'L12',woodNeed:190,palletSku:'40×48 STD',notes:'Orden de ejemplo bloqueada por material.'},
     {id:'22418',customer:'Auto Parts Midwest',product:'42×48',qty:140,due:'Hoy',shipping:'factory',stage:'cutting',wood:'L10',woodNeed:120,palletSku:'42×48 HD',notes:'Corte iniciado.'},
     {id:'22415',customer:'Industrial Parts LLC',product:'48×48',qty:95,due:'Hoy',shipping:'pickup',stage:'material_ready',wood:'L8',woodNeed:80,palletSku:'48×48 STD',notes:'Material cortado y listo para fabricar.'},
-    {id:'22395',customer:'Cummins Inc.',product:'48×40',qty:286,due:'Hoy',shipping:'factory',stage:'ready_load',wood:'L8',woodNeed:0,palletSku:'48×40 STD',trailer:"53'",notes:'Listo para optimizar carga.'},
-    {id:'22402',customer:'DHL Supply Chain',product:'40×48',qty:168,due:'Hoy',shipping:'pickup',stage:'ready_load',wood:'L8',woodNeed:0,palletSku:'40×48 STD',trailer:'Cliente trae tráiler',notes:'Cliente recogerá con su propio tráiler.'},
+    {id:'22395',customer:'Cummins Inc.',product:'Carga mixta',qty:286,due:'Hoy',shipping:'factory',stage:'ready_load',wood:'L8',woodNeed:0,palletSku:'MIX-22395',trailer:"53'",trailerWidth:96,trailerLength:628,notes:'Listo para optimizar carga.',loadItems:[
+      {name:'145×26',length:145,width:26,quantity:35,maxHeight:10,canRotate:false},
+      {name:'120×24',length:120,width:24,quantity:15,maxHeight:10,canRotate:false},
+      {name:'102×24',length:102,width:24,quantity:20,maxHeight:10,canRotate:false},
+      {name:'86×24',length:86,width:24,quantity:20,maxHeight:10,canRotate:true},
+      {name:'72×24',length:72,width:24,quantity:20,maxHeight:10,canRotate:true},
+      {name:'52×52',length:52,width:52,quantity:50,maxHeight:13,canRotate:false},
+      {name:'40×40',length:40,width:40,quantity:50,maxHeight:13,canRotate:false},
+      {name:'48×40',length:48,width:40,quantity:2,maxHeight:1,canRotate:true},
+      {name:'27×27',length:27,width:27,quantity:74,maxHeight:13,canRotate:false}
+    ]},
+    {id:'22402',customer:'DHL Supply Chain',product:'40×48',qty:168,due:'Hoy',shipping:'pickup',stage:'ready_load',wood:'L8',woodNeed:0,palletSku:'40×48 STD',trailer:'Cliente trae tráiler',trailerWidth:96,trailerLength:628,notes:'Cliente recogerá con su propio tráiler.',loadItems:[{name:'40×48',length:40,width:48,quantity:168,maxHeight:13,canRotate:true}]},
     {id:'22381',customer:'ABC Manufacturing',product:'42×48',qty:212,due:'Hoy',shipping:'factory',stage:'transit',wood:'L8',woodNeed:0,palletSku:'42×48 HD',trailer:"53'",notes:'Chofer en tránsito.'}
   ],
   finished:[
@@ -31,7 +42,7 @@ const initialState={
   ]
 };
 let state=loadState();
-let currentView='inicio';
+let currentView=(location.hash||'').replace('#','')||'inicio';
 const views={
   inicio:['Centro de control','Resumen de toda la operación y flujo entre etapas.'],
   madera:['Inventario de madera','Existencias, reservas, recepción y material realmente disponible.'],
@@ -59,6 +70,17 @@ function addNote(text,kind='ok'){state.notifications.unshift({id:Date.now(),text
 function reserveWood(order){const wood=lumberById(order.wood);if(!wood)return false;const available=wood.qty-wood.reserved;if(available<order.woodNeed)return false;wood.reserved+=order.woodNeed;save();return true}
 function consumeReservedWood(order){const wood=lumberById(order.wood);if(!wood)return;wood.qty=Math.max(0,wood.qty-order.woodNeed);wood.reserved=Math.max(0,wood.reserved-order.woodNeed);save()}
 function findFinished(sku){let f=state.finished.find(x=>x.sku===sku);if(!f){f={sku,qty:0,reserved:0};state.finished.push(f)}return f}
+function parseProductMeasure(text){
+  const m=String(text||'').match(/(\d+(?:\.\d+)?)\s*[×xX]\s*(\d+(?:\.\d+)?)/);
+  return m?{length:Number(m[1]),width:Number(m[2])}:null;
+}
+function loadItemsFor(order){
+  if(Array.isArray(order.loadItems)&&order.loadItems.length)return clone(order.loadItems);
+  const m=parseProductMeasure(order.product);
+  if(!m)return [];
+  return [{name:`${m.length}×${m.width}`,length:m.length,width:m.width,quantity:Number(order.qty)||1,maxHeight:13,canRotate:true}];
+}
+function loadTotal(items){return (items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0)}
 
 function renderInicio(){
   const active=state.orders.filter(o=>o.stage!=='completed').length, ready=state.orders.filter(o=>o.stage==='ready_load').length, prod=state.orders.filter(o=>['waiting_material','cutting','material_ready','building'].includes(o.stage)).length, low=state.lumber.filter(x=>x.qty-x.reserved<x.min).length;
@@ -99,14 +121,38 @@ function startCut(id){const o=orderById(id);const w=lumberById(o.wood);const ava
 function finishCut(id){const o=orderById(id);consumeReservedWood(o);o.stage='material_ready';addNote(`Orden #${o.id}: material listo. Fabricación ya puede recogerlo.`);save();toast('Material listo → apareció en Fabricación.');render()}
 function startBuild(id){const o=orderById(id);o.stage='building';addNote(`Orden #${o.id}: fabricación iniciada.`);save();toast('Fabricación iniciada.');render()}
 function finishBuild(id){const o=orderById(id);o.stage='ready_load';const f=findFinished(o.palletSku);f.qty+=o.qty;f.reserved+=o.qty;addNote(`Orden #${o.id}: ${o.qty} pallets terminados → lista para carga.`);save();toast('Fabricación terminada → orden enviada a Carga.');render()}
-function openLoadOrder(id){const o=orderById(id);const pickup=o.shipping==='pickup';openDialog(`Pedido #${o.id}`,`${o.customer} · ${pickup?'Recogida del cliente':'Envío de fábrica'}`,`<div class="workflow"><span class="step active">1 Verificar</span><span class="step">2 Optimizar / cargar</span><span class="step">3 Evidencia</span><span class="step">4 Firma</span><span class="step">5 Cerrar</span></div><div class="detail-grid"><div class="detail"><b>Producto</b>${o.product}</div><div class="detail"><b>Cantidad</b>${o.qty} pallets</div><div class="detail"><b>Transporte</b>${pickup?'Cliente trae tráiler':'Fábrica pone chofer y tráiler'}</div><div class="detail"><b>Estado</b>${stageLabel(o.stage)}</div></div><div class="stage-actions"><button type="button" class="btn secondary" id="orderLM">Abrir LoadMaster AI</button><button type="button" class="btn" id="markLoading">Marcar cargando</button></div><div class="section evidence"><b>Foto / factura firmada</b><p class="small">La foto es opcional, pero se conserva porque normalmente sirve como evidencia de la factura firmada.</p><input id="evidenceFile" type="file" accept="image/*"><div class="evidence-preview" id="evidencePreview">Sin foto seleccionada.</div></div><div class="section form-grid"><label class="wide"><span>Firma / nombre de quien recibe</span><input id="signatureName" placeholder="Nombre o firma registrada"></label><label class="wide"><span>Notas de carga</span><textarea id="loadNotes">${o.notes||''}</textarea></label></div><div class="dialog-actions"><button type="button" class="btn secondary" id="loadCancel">Cerrar</button><button type="button" class="btn" id="finishDispatch">${pickup?'Completar recogida':'Despachar / en tránsito'}</button></div>`);
-  document.getElementById('loadCancel').onclick=closeDialog;document.getElementById('orderLM').onclick=openLoadMaster;document.getElementById('markLoading').onclick=()=>{o.stage='loading';save();toast('Pedido marcado como cargando.');};document.getElementById('evidenceFile').onchange=e=>{document.getElementById('evidencePreview').textContent=e.target.files[0]?`Foto seleccionada: ${e.target.files[0].name}`:'Sin foto seleccionada.'};document.getElementById('finishDispatch').onclick=()=>{const sig=document.getElementById('signatureName').value.trim();const hasPhoto=Boolean(document.getElementById('evidenceFile').files[0]);o.notes=document.getElementById('loadNotes').value;if(pickup){completeOrder(o,`${sig?'Firma':'Sin firma'}${hasPhoto?' + foto factura':''}`)}else{o.stage='transit';o.evidence=`${sig?'Firma salida':'Sin firma salida'}${hasPhoto?' + foto':''}`;addNote(`Orden #${o.id}: salió de fábrica y está en tránsito.`);save();closeDialog();toast('Pedido en tránsito.');render()}}
+function openLoadOrder(id){const o=orderById(id);const pickup=o.shipping==='pickup';openDialog(`Pedido #${o.id}`,`${o.customer} · ${pickup?'Recogida del cliente':'Envío de fábrica'}`,`<div class="workflow"><span class="step active">1 Verificar</span><span class="step">2 Optimizar / cargar</span><span class="step">3 Evidencia</span><span class="step">4 Firma</span><span class="step">5 Cerrar</span></div><div class="detail-grid"><div class="detail"><b>Producto</b>${o.product}</div><div class="detail"><b>Cantidad</b>${o.qty} pallets</div><div class="detail"><b>Transporte</b>${pickup?'Cliente trae tráiler':'Fábrica pone chofer y tráiler'}</div><div class="detail"><b>Estado</b>${stageLabel(o.stage)}</div></div><div class="stage-actions"><button type="button" class="btn secondary" id="orderLM">Preparar / optimizar carga</button><button type="button" class="btn" id="markLoading">Marcar cargando</button></div><div class="section evidence"><b>Foto / factura firmada</b><p class="small">La foto es opcional, pero se conserva porque normalmente sirve como evidencia de la factura firmada.</p><input id="evidenceFile" type="file" accept="image/*"><div class="evidence-preview" id="evidencePreview">Sin foto seleccionada.</div></div><div class="section form-grid"><label class="wide"><span>Firma / nombre de quien recibe</span><input id="signatureName" placeholder="Nombre o firma registrada"></label><label class="wide"><span>Notas de carga</span><textarea id="loadNotes">${o.notes||''}</textarea></label></div><div class="dialog-actions"><button type="button" class="btn secondary" id="loadCancel">Cerrar</button><button type="button" class="btn" id="finishDispatch">${pickup?'Completar recogida':'Despachar / en tránsito'}</button></div>`);
+  document.getElementById('loadCancel').onclick=closeDialog;document.getElementById('orderLM').onclick=()=>openLoadPreparation(o.id);document.getElementById('markLoading').onclick=()=>{o.stage='loading';save();toast('Pedido marcado como cargando.');};document.getElementById('evidenceFile').onchange=e=>{document.getElementById('evidencePreview').textContent=e.target.files[0]?`Foto seleccionada: ${e.target.files[0].name}`:'Sin foto seleccionada.'};document.getElementById('finishDispatch').onclick=()=>{const sig=document.getElementById('signatureName').value.trim();const hasPhoto=Boolean(document.getElementById('evidenceFile').files[0]);o.notes=document.getElementById('loadNotes').value;if(pickup){completeOrder(o,`${sig?'Firma':'Sin firma'}${hasPhoto?' + foto factura':''}`)}else{o.stage='transit';o.evidence=`${sig?'Firma salida':'Sin firma salida'}${hasPhoto?' + foto':''}`;addNote(`Orden #${o.id}: salió de fábrica y está en tránsito.`);save();closeDialog();toast('Pedido en tránsito.');render()}}
 }
 function completeDelivery(id){const o=orderById(id);completeOrder(o,(o.evidence||'Salida registrada')+' + entrega confirmada')}
 function completeOrder(o,evidence){const f=findFinished(o.palletSku);f.qty=Math.max(0,f.qty-o.qty);f.reserved=Math.max(0,f.reserved-o.qty);state.history.unshift({id:o.id,customer:o.customer,shipping:o.shipping,completed:'Hoy',evidence:evidence||'Registro completado'});state.orders=state.orders.filter(x=>x.id!==o.id);addNote(`Orden #${o.id}: completada y enviada al historial.`);save();closeDialog();toast('Orden completada → Historial.');render()}
-function openLoadMaster(){openDialog('LoadMaster AI v5.58','Motor de optimización integrado dentro del módulo Carga.',`<iframe class="loadmaster-frame" src="loadmaster.html" title="LoadMaster AI"></iframe><div class="dialog-actions"><button class="btn secondary" value="cancel">Cerrar</button></div>`)}
+function openLoadPreparation(id){
+  const o=orderById(id);if(!o)return;
+  const items=loadItemsFor(o);
+  if(!items.length){toast('Esta orden no tiene medidas válidas para LoadMaster.');return}
+  const rows=items.map((x,i)=>`<tr data-prep-row="${i}"><td><b>${x.name||`${x.length}×${x.width}`}</b><div class="small">${x.length} × ${x.width} in</div></td><td><input class="qty-locked" type="number" value="${Number(x.quantity)||1}" readonly aria-label="Cantidad bloqueada"></td><td><input data-prep-height type="number" min="1" value="${Math.max(1,Number(x.maxHeight)||13)}" aria-label="Altura máxima"></td><td class="center"><input data-prep-rotate type="checkbox" ${x.canRotate!==false?'checked':''} aria-label="Se puede girar"></td></tr>`).join('');
+  openDialog(`Preparar carga #${o.id}`,`${o.customer} · ${loadTotal(items)} pallets enviados automáticamente desde la orden`,
+  `<div class="notification info"><b>Datos conectados.</b> Las medidas y cantidades vienen de la orden y no necesitas volver a escribirlas. Antes de abrir LoadMaster revisa únicamente la altura máxima y si cada medida puede girar.</div>
+  <div class="prep-trailer"><label><span>Ancho del tráiler (in)</span><input id="prepTrailerWidth" type="number" min="1" value="${Number(o.trailerWidth)||96}"></label><label><span>Largo del tráiler (in)</span><input id="prepTrailerLength" type="number" min="1" value="${Number(o.trailerLength)||628}"></label></div>
+  <div class="table-wrap prep-table"><table><thead><tr><th>Medida</th><th>Cantidad</th><th>Altura máx.</th><th>Girar</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="prep-note"><b>${loadTotal(items)} pallets</b> · ${items.length} medida${items.length===1?'':'s'} · cantidad protegida por la orden</div>
+  <div class="dialog-actions"><button type="button" class="btn secondary" id="prepCancel">Volver</button><button type="button" class="btn" id="prepLaunch">Abrir LoadMaster a pantalla completa</button></div>`);
+  document.getElementById('prepCancel').onclick=()=>{closeDialog();openLoadOrder(id)};
+  document.getElementById('prepLaunch').onclick=()=>{
+    const prepared=items.map((item,i)=>{const row=document.querySelector(`[data-prep-row="${i}"]`);return {...item,quantity:Number(item.quantity)||1,maxHeight:Math.max(1,Number(row.querySelector('[data-prep-height]').value)||1),canRotate:row.querySelector('[data-prep-rotate]').checked,type:item.type||'4-way'};});
+    o.loadItems=clone(prepared);o.trailerWidth=Math.max(1,Number(document.getElementById('prepTrailerWidth').value)||96);o.trailerLength=Math.max(1,Number(document.getElementById('prepTrailerLength').value)||628);save();
+    const payload={version:1,source:'Pallet Operations',orderId:o.id,customer:o.customer,shipping:o.shipping,trailer:{width:o.trailerWidth,length:o.trailerLength},items:prepared,returnUrl:'index.html#carga',createdAt:new Date().toISOString()};
+    localStorage.setItem(LM_HANDOFF,JSON.stringify(payload));
+    window.location.href=`loadmaster.html?platform=1&order=${encodeURIComponent(o.id)}`;
+  };
+}
+function openLoadMaster(){
+  const payload={version:1,source:'Pallet Operations',orderId:'manual',customer:'Carga manual',trailer:{width:96,length:628},items:[],returnUrl:'index.html#carga',createdAt:new Date().toISOString()};
+  localStorage.setItem(LM_HANDOFF,JSON.stringify(payload));window.location.href='loadmaster.html?platform=1';
+}
 
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));
 document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
 document.getElementById('resetDemo').addEventListener('click',()=>{if(confirm('¿Restablecer todos los datos del prototipo?')){state=structuredClone(initialState);save();toast('Demo restablecida.');render()}});
+if(!views[currentView])currentView='inicio';
 render();

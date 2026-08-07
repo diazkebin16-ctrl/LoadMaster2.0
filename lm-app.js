@@ -2018,8 +2018,32 @@ function normalizeLibraryItem(raw={}){
   class App {
     constructor(){
       this.store=new Store(); this.patternMemory=new PatternMemory(); this.strategyMemory=new StrategyMemory(); this.visualHistory=new VisualHistoryMemory(); this.installPrompt=null; this.lastSolutions=[]; this.referenceImage=null; this.editingPatternId=null; this.lastOptimizationMs=0; this.lastWinningStrategy="Manual / sin optimizar"; this.currentOptimizationSessionId=null; this.selectedHistoryIds=new Set(); this.manualEditMode=false; this.progressiveSession=null; this.pendingProgressiveImprovement=null; this.photoReaderFile=null; this.photoReaderDataUrl=""; this.photoReaderItems=[]; this.lastStackingResult=null; this.hasOptimized=false;
-      this.bind(); this.syncTrailerInputs(); this.restoreAccordionState(); this.render();
+      this.bind(); this.restoreAccordionState(); this.importPlatformHandoff(); this.syncTrailerInputs(); this.render();
       /* Embedded prototype: service worker disabled to avoid host-app cache/scope collisions. */
+    }
+
+    importPlatformHandoff(){
+      const key='palletOpsLoadmasterHandoff';
+      try{
+        const raw=localStorage.getItem(key);if(!raw)return;
+        const payload=JSON.parse(raw);if(!payload||payload.source!=='Pallet Operations')return;
+        const bar=$('platformIntegrationBar'),back=$('platformBackBtn');
+        if(bar){bar.hidden=false;$('platformOrderTitle').textContent=payload.orderId&&payload.orderId!=='manual'?`Pedido #${payload.orderId} · ${payload.customer||''}`:'LoadMaster · carga manual';$('platformOrderMeta').textContent=Array.isArray(payload.items)&&payload.items.length?`${payload.items.reduce((n,x)=>n+(Number(x.quantity)||0),0)} pallets · ${payload.items.length} medidas precargadas`:'Sin medidas precargadas';}
+        if(back)back.onclick=()=>{window.location.href=payload.returnUrl||'index.html#carga';};
+        if(payload.trailer){this.store.state.trailer={width:Math.max(1,Number(payload.trailer.width)||96),length:Math.max(1,Number(payload.trailer.length)||628)};}
+        if(!Array.isArray(payload.items)||!payload.items.length)return;
+        const incoming=[];
+        for(const item of payload.items){
+          const l=Number(item.length),w=Number(item.width),quantity=Math.max(1,Math.round(Number(item.quantity)||1)),maxHeight=Math.max(1,Math.round(Number(item.maxHeight)||1));
+          if(!(l>0&&w>0&&quantity>0))continue;
+          const base={name:String(item.name||`${l}×${w}`),w,l,type:item.type==='2-way'?'2-way':'4-way',category:item.category||'Orden conectada',canRotate:item.canRotate!==false,locked:false,rotated:false,maxHeight};
+          for(const n of this.splitQty(quantity,maxHeight))incoming.push({...base,id:uid(),qty:n,x:0,y:0});
+        }
+        const preview=preparePreviewLayout(incoming,this.store.state.trailer);
+        this.store.state.stacks=preview.placed;this.store.state.pending=preview.pending;this.store.state.selectedId=null;this.store.history=[];this.store.future=[];
+        this.hasOptimized=false;this.lastWinningStrategy=`Pedido #${payload.orderId||''} precargado`;this.lastStackingResult=null;this.platformOrder=payload;
+        setTimeout(()=>this.toast(`Pedido #${payload.orderId||''} cargado automáticamente: ${incoming.reduce((n,x)=>n+(Number(x.qty)||0),0)} pallets`),250);
+      }catch(err){console.warn('No se pudo importar la orden conectada',err);}
     }
     get state(){return this.store.state;}
     toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2100);}
