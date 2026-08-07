@@ -1,4 +1,6 @@
-PALLET OPERATIONS — PROTOTIPO v0.5
+Pallet Operations Platform Prototype v0.6
+
+PALLET OPERATIONS — PROTOTIPO v0.6
 
 Cambios principales:
 - Preparación de carga por orden con tabla de medidas.
@@ -10,3 +12,6 @@ Cambios principales:
 - Botón Volver a Carga dentro de LoadMaster.
 
 Para GitHub Pages: subir TODOS los archivos de esta carpeta al mismo nivel.
+
+
+v0.6: Nueva orden en 2 pasos, número interno consecutivo automático, orden del cliente opcional, plantillas técnicas reutilizables, cálculo provisional de material y planificación anticipada en LoadMaster desde el momento de crear la orden.
