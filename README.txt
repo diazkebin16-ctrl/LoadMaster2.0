@@ -41,3 +41,8 @@ Los datos son ficticios. No modifica sistemas reales ni inventario de fábrica.
 
 
 v0.3: LoadMaster fue aplanado al directorio principal para evitar errores 404 en GitHub Pages al subir desde teléfono. Abra index.html; el botón LoadMaster usa loadmaster.html.
+
+v0.4 FIX LOADMASTER EMBEDDED
+- Corregido choque de nombres entre styles.css/app.js de la plataforma y LoadMaster.
+- LoadMaster ahora usa lm-styles.css y lm-app.js.
+- Se desactiva el service worker dentro del iframe para evitar conflictos de caché/scope en GitHub Pages.
