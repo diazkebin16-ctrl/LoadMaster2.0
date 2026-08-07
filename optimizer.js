@@ -536,7 +536,7 @@ class LoadEngine {
     // una solución local buena y rehacer entre 25 % y 85 % de las pilas móviles.
     // La solución original siempre permanece como candidata fuera de este método.
     const missing=(unplaced||[]).map(Geometry.clone);
-    if(!missing.length||missing.length>2)return [];
+    if(!missing.length||missing.length>5)return [];
     const movable=placed.filter(s=>!s.locked);
     if(movable.length<4)return [];
     const used=Math.max(1,Geometry.usedLength(placed));
@@ -611,7 +611,7 @@ class LoadEngine {
     // Segundo optimizador independiente: abandona el óptimo local y reconstruye
     // zonas grandes con las pilas pendientes como objetivo obligatorio.
     const missing=(unplaced||[]).map(Geometry.clone);
-    if(!missing.length||missing.length>2)return [];
+    if(!missing.length||missing.length>5)return [];
     const movable=placed.filter(s=>!s.locked);
     if(movable.length<6)return [];
     const candidates=[], seenSets=new Set();
@@ -672,6 +672,92 @@ class LoadEngine {
         const stillMissing=originals.filter(s=>!placedIds.has(s.id));
         candidates.push({name:`Escape de óptimo local (${ids.length} pilas reconstruidas)`,family:'Escape global',stacks:result.stacks,unplaced:stillMissing});
         if(!stillMissing.length)return candidates;
+      }
+    }
+    return candidates;
+  }
+
+  focusedPendingRescue(placed,unplaced,originals){
+    // v5.56: rescate orientado por la medida pendiente con más pallets. Esta
+    // búsqueda no intenta mejorar todo el plano a la vez: libera vecindarios que
+    // se parecen a la huella objetivo y obliga a insertar ese objetivo primero.
+    const missing=(unplaced||[]).map(Geometry.clone);
+    if(!missing.length||missing.length>5)return [];
+    const area=s=>(Number(s.w)||0)*(Number(s.l)||0),key=s=>`${Math.min(Number(s.w)||0,Number(s.l)||0)}x${Math.max(Number(s.w)||0,Number(s.l)||0)}`;
+    const focus=[...missing].sort((a,b)=>(Number(b.qty)||1)-(Number(a.qty)||1)||area(b)-area(a))[0];
+    const fkey=key(focus),focusMissing=missing.filter(x=>key(x)===fkey),otherMissing=missing.filter(x=>key(x)!==fkey);
+    const movable=placed.filter(s=>!s.locked);if(!movable.length)return [];
+    const fitScore=s=>{
+      const fw=Number(focus.w)||0,fl=Number(focus.l)||0,sw=Number(s.w)||0,sl=Number(s.l)||0;
+      const support=(sw+EPS>=fw&&sl+EPS>=fl)||(sw+EPS>=fl&&sl+EPS>=fw);
+      return (support?0:1e6)+Math.min(Math.abs(sw-fw)+Math.abs(sl-fl),Math.abs(sw-fl)+Math.abs(sl-fw))*100+Math.abs(area(s)-area(focus));
+    };
+    const ordered=[...movable].sort((a,b)=>fitScore(a)-fitScore(b)||(Number(a.qty)||1)-(Number(b.qty)||1));
+    const candidates=[];
+    for(const count of [6,9,12,16]){
+      if(!this.hasTime())break;
+      const selected=ordered.slice(0,Math.min(count,ordered.length)),ids=new Set(selected.map(x=>x.id)),base=placed.filter(x=>!ids.has(x.id));
+      if(!validateLayout(base,this.trailer).ok)continue;
+      const pool=[...focusMissing,...selected,...otherMissing];
+      const orders=[pool,[...focusMissing,...selected.sort((a,b)=>area(b)-area(a)),...otherMissing],...this.rowCombinationOrders(pool),...this.orders(pool).slice(0,8)];
+      for(const order of orders){
+        if(!this.hasTime())break;
+        const result=this.packPartialLookahead(order,base,originals,pool.length>24?650:900)||this.packPartial(order,base,originals,pool.length>24?650:900);
+        if(!result||!validateLayout(result.stacks,this.trailer).ok)continue;
+        const placedIds=new Set(result.stacks.map(s=>s.id)),stillMissing=originals.filter(s=>!placedIds.has(s.id));
+        candidates.push({name:`Rescate enfocado ${fkey}`,family:'Focused Pending Rescue',stacks:result.stacks,unplaced:stillMissing});
+        if(!stillMissing.length)return candidates;
+      }
+    }
+    return candidates;
+  }
+
+  ruinRecreateRescue(placed,unplaced,originals){
+    // v5.56: Large Neighborhood Search. Sacrifica partes de una solución parcial
+    // en lugar de protegerlas y reconstruye 15–60 % de las pilas junto con las
+    // pendientes. Está especialmente pensado para las últimas 1–5 pilas.
+    const missing=(unplaced||[]).map(Geometry.clone);
+    if(!missing.length||missing.length>5)return [];
+    const movable=placed.filter(s=>!s.locked);
+    if(movable.length<3)return [];
+    const candidates=[],seen=new Set();
+    const fractions=[0.15,0.22,0.30,0.38,0.48,0.60];
+    const area=s=>(Number(s.w)||0)*(Number(s.l)||0);
+    const sameShape=s=>missing.some(p=>(Math.abs(s.w-p.w)<EPS&&Math.abs(s.l-p.l)<EPS)||(Math.abs(s.w-p.l)<EPS&&Math.abs(s.l-p.w)<EPS));
+    const similarity=s=>Math.min(...missing.map(p=>Math.abs(area(s)-area(p))+Math.abs(Math.max(s.w,s.l)-Math.max(p.w,p.l))*12));
+    const families=[
+      [...movable].sort((a,b)=>(Number(a.qty)||1)-(Number(b.qty)||1)||similarity(a)-similarity(b)),
+      [...movable].sort((a,b)=>(sameShape(b)?1:0)-(sameShape(a)?1:0)||similarity(a)-similarity(b)),
+      [...movable].sort((a,b)=>(b.y+b.l)-(a.y+a.l)),
+      [...movable].sort((a,b)=>(a.y+a.l)-(b.y+b.l)),
+      [...movable].sort((a,b)=>area(a)-area(b))
+    ];
+    for(const f of fractions){
+      if(!this.hasTime())break;
+      const n=Math.max(3,Math.min(movable.length,Math.ceil(movable.length*f)));
+      for(const family of families){
+        if(!this.hasTime())break;
+        const removedList=family.slice(0,n),ids=[...new Set(removedList.map(s=>s.id))],key=ids.slice().sort().join('|');
+        if(seen.has(key))continue;seen.add(key);
+        const removed=new Set(ids),base=placed.filter(s=>s.locked||!removed.has(s.id));
+        if(!validateLayout(base,this.trailer).ok)continue;
+        const pieces=placed.filter(s=>removed.has(s.id)),pool=[...missing,...pieces];
+        const orders=[
+          [...missing,...pieces],
+          [...pool].sort((a,b)=>(Number(b.qty)||1)-(Number(a.qty)||1)||area(b)-area(a)),
+          [...pool].sort((a,b)=>area(b)-area(a)),
+          ...this.rowCombinationOrders(pool),
+          ...this.orders(pool).slice(0,8)
+        ];
+        for(const order of orders){
+          if(!this.hasTime())break;
+          const beam=pool.length>28?420:pool.length>18?650:900;
+          const result=this.packPartialLookahead(order,base,originals,beam)||this.packPartial(order,base,originals,beam);
+          if(!result||!validateLayout(result.stacks,this.trailer).ok)continue;
+          const placedIds=new Set(result.stacks.map(s=>s.id)),stillMissing=originals.filter(s=>!placedIds.has(s.id));
+          candidates.push({name:`Sacrificio y reconstrucción (${ids.length} pilas)`,family:'Ruin & Recreate',stacks:result.stacks,unplaced:stillMissing});
+          if(!stillMissing.length)return candidates;
+        }
       }
     }
     return candidates;
@@ -1096,6 +1182,10 @@ class LoadEngine {
         if(!localSolved&&this.hasTime()){
           for(const rebuilt of this.deepRebuildRescue(best.s.stacks,best.missing,input))solutions.push(rebuilt);
         }
+        if(this.hasTime()){
+          for(const rebuilt of this.focusedPendingRescue(best.s.stacks,best.missing,input))solutions.push(rebuilt);
+          for(const rebuilt of this.ruinRecreateRescue(best.s.stacks,best.missing,input))solutions.push(rebuilt);
+        }
       }
     }
 
@@ -1150,14 +1240,19 @@ function runPortfolioSearch(input,trailer,{totalTimeMs=21000,patterns=[],strateg
   }
   // Segunda etapa especializada: parte de las mejores soluciones parciales y
   // reconstruye regiones grandes para escapar del óptimo local.
-  const escapeSeeds=[...all].filter(s=>s&&Array.isArray(s.stacks)&&(s.unplaced||[]).length>0&&(s.unplaced||[]).length<=2)
+  const escapeSeeds=[...all].filter(s=>s&&Array.isArray(s.stacks)&&(s.unplaced||[]).length>0&&(s.unplaced||[]).length<=5)
     .sort((a,b)=>(b.loadedPallets||0)-(a.loadedPallets||0)||(b.loadedStacks||0)-(a.loadedStacks||0)).slice(0,3);
   for(let i=0;i<escapeSeeds.length;i++){
     const elapsed=Date.now()-started,remaining=totalTimeMs-elapsed;
     if(remaining<120)break;
     const seed=escapeSeeds[i];
     const engine=new LoadEngine(trailer,{timeLimitMs:remaining,patterns:[],strategies,seedOffset:211+i*97,profile:'restart'});
-    for(const sol of engine.optimumEscapeRescue(Geometry.clone(seed.stacks),Geometry.clone(seed.unplaced||[]),Geometry.clone(input))){
+    const rescueCandidates=[
+      ...engine.optimumEscapeRescue(Geometry.clone(seed.stacks),Geometry.clone(seed.unplaced||[]),Geometry.clone(input)),
+      ...engine.focusedPendingRescue(Geometry.clone(seed.stacks),Geometry.clone(seed.unplaced||[]),Geometry.clone(input)),
+      ...engine.ruinRecreateRescue(Geometry.clone(seed.stacks),Geometry.clone(seed.unplaced||[]),Geometry.clone(input))
+    ];
+    for(const sol of rescueCandidates){
       Object.assign(sol,engine.metrics(sol.stacks,input));
       sol.loadedStacks=sol.stacks.length;
       sol.loadedPallets=sol.stacks.reduce((n,x)=>n+(Number(x.qty)||1),0);
@@ -1180,7 +1275,7 @@ function runPortfolioSearch(input,trailer,{totalTimeMs=21000,patterns=[],strateg
 }
 
 
-// Fachada pública del optimizador. v5.48 mantiene el error de integración
+// Fachada pública del optimizador. v5.56 expone una integración estable
 // "Optimizer is not defined" y garantiza una búsqueda desde una copia limpia.
 const Optimizer = Object.freeze({
   async optimizeDeep(input, trailer, options = {}) {
