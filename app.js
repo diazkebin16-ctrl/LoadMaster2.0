@@ -1,5 +1,5 @@
-const STORAGE='palletOpsPrototypeV020';
-const PREV_STORAGE_KEYS=['palletOpsPrototypeV019','palletOpsPrototypeV018','palletOpsPrototypeV017','palletOpsPrototypeV016'];
+const STORAGE='palletOpsPrototypeV021';
+const PREV_STORAGE_KEYS=['palletOpsPrototypeV020','palletOpsPrototypeV019','palletOpsPrototypeV018','palletOpsPrototypeV017','palletOpsPrototypeV016'];
 const LM_HANDOFF='palletOpsLoadmasterHandoff';
 const initialState={
   settings:{historyDays:60,nextOrderNumber:1,theme:'system'},
@@ -221,6 +221,27 @@ function loadItemsFor(order){
   const m=parseProductMeasure(order.product);if(!m)return [];return [{name:`${m.length}×${m.width}`,length:m.length,width:m.width,quantity:Number(order.qty)||1,maxHeight:20,canRotate:true,type:'4-way-runner'}]
 }
 function loadTotal(items){return (items||[]).reduce((n,x)=>n+(Number(x.quantity)||0),0)}
+
+
+function orderMaterialSummary(o){
+  try{
+    const rows=pieceAvailability({products:orderProducts(o)});
+    if(!rows.length)return '<span class="small">Sin piezas de madera.</span>';
+    return `<div class="order-material-mini">${rows.map(r=>`<div><b>${pieceSizeLabel(r)} · #${r.grade}</b><br><span class="small">${r.count} piezas · inventario ${r.inventory} · faltante ${r.missing}</span></div>`).join('')}</div>`;
+  }catch(err){console.error('Error en resumen de material',o?.id,err);return '<span class="small">Información pendiente de actualizar.</span>'}
+}
+function renderOrdenes(){
+  const rows=Array.isArray(state.orders)?state.orders:[];
+  const body=rows.map(o=>{
+    try{
+      const search=[o?.id,o?.clientOrder,o?.customer,o?.product].filter(Boolean).join(' ').toLowerCase();
+      const products=orderProducts(o);
+      const measures=products.length>1?`${products.length} medidas`:String(o?.product||products[0]?.name||'Sin medida');
+      return `<tr data-order-row data-search="${search.replace(/"/g,'&quot;')}"><td><b>#${o?.id||'—'}</b>${o?.clientOrder?`<div class="small">Orden cliente: ${o.clientOrder}</div>`:''}</td><td>${o?.customer||'Sin cliente'}</td><td>${measures}</td><td>${Number(o?.qty)||0}</td><td>${pill(stageLabel(o?.stage||'waiting_material'),stageColor(o?.stage||'waiting_material'))}</td><td>${orderMaterialSummary(o)}</td><td><button class="btn secondary" data-order-spec="${o?.id||''}">Especificación</button></td></tr>`;
+    }catch(err){console.error('Error dibujando orden',o?.id,err);return `<tr><td><b>#${o?.id||'—'}</b></td><td>${o?.customer||'Sin cliente'}</td><td colspan="5"><span class="small">Esta orden necesita actualizarse, pero no bloquea las demás.</span></td></tr>`}
+  }).join('');
+  return `<div class="toolbar"><button class="btn" data-action="newOrder">+ Nueva orden</button><input id="ordersSearch" class="search-input" placeholder="Buscar # interno, orden cliente o cliente"></div><div class="table-wrap"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Producto</th><th>Cantidad</th><th>Etapa</th><th>Material que se utilizará</th><th>Detalle</th></tr></thead><tbody>${body||'<tr><td colspan="7">No hay órdenes.</td></tr>'}</tbody></table></div>`;
+}
 
 function renderInicio(){
   const active=state.orders.filter(o=>o.stage!=='completed').length, ready=state.orders.filter(o=>o.stage==='ready_load').length, prod=state.orders.filter(o=>['waiting_material','cutting','material_ready','building'].includes(o.stage)).length, low=state.lumber.filter(x=>x.qty-x.reserved<x.min).length;
