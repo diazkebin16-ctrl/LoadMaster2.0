@@ -133,3 +133,16 @@ html[data-theme="dark"] .material-plan-group{border-color:var(--line)}
 .conversion-cut-row{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end;padding:9px 0;border-top:1px solid var(--line)}
 .conversion-cut-row:first-of-type{border-top:0}.conversion-cut-row label{font-size:12px;color:var(--muted)}.conversion-cut-row label span{display:block;margin-bottom:5px}.conversion-cut-row input{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--panel);color:var(--text)}
 @media(max-width:700px){.conversion-cut-row{grid-template-columns:1fr 1fr}.conversion-cut-row .remove-board{grid-column:2;justify-self:end}}
+
+/* v0.25 — editor directo de posición de tablas */
+.pallet-editor-svg{touch-action:none;user-select:none;-webkit-user-select:none}
+.svg-draggable-board{cursor:grab;transition:filter .12s ease}
+.svg-draggable-board.dragging{cursor:grabbing;filter:drop-shadow(0 3px 5px rgba(0,0,0,.28));opacity:.94}
+.visual-editor-help{margin:10px 0 14px}
+.deck-board{min-width:108px}
+.deck-move button{white-space:nowrap}
+@media(max-width:760px){.deck-board{min-width:102px}.visual-editor-help{font-size:12px}}
+
+/* v0.26 editor compacto */
+.deck-editor-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.compact-pallet-editor{max-width:820px;margin:0 auto}.compact-pallet-editor h4{margin:6px 0}.compact-pallet-editor .pallet-editor-svg{width:100%;max-height:360px;aspect-ratio:620/390}.compact-pallet-editor .deck-strip{max-width:100%}.compact-pallet-editor .deck-sequence{margin-top:6px}
+@media(max-width:760px){.compact-pallet-editor .pallet-editor-svg{max-height:280px}.deck-editor-tabs .btn{flex:1 1 140px;padding:9px 10px}.compact-pallet-editor .deck-board{min-width:72px}}

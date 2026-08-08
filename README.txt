@@ -54,3 +54,26 @@ v0.18: Conversión de madera renovada. Permite cortar largo y convertir sección
 v0.19: Corte múltiple por pieza madre. Permite añadir varios largos editables en una sola operación, calcula el total usado y el sobrante por pieza, multiplica el desperdicio por la cantidad de piezas fuente y lo guarda en un historial. Conversión muestra además totales mensuales de desperdicio para comparar cada mes. La conversión de sección sigue usando rendimiento manual y no registra sobrantes.
 
 HOTFIX v0.20: corrige pantalla en blanco del Centro de control con datos guardados de versiones anteriores; añade migración desde v0.16-v0.19, aislamiento del cálculo de piezas pendientes y recuperación segura de vistas.
+
+v0.25
+- Editor visual: tablas superiores e inferiores se pueden arrastrar directamente sobre el pallet para guardar su posición real.
+- Las separaciones ya no se fuerzan a ser uniformes; se permiten tablas juntas o con espacios diferentes.
+- Flechas debajo del plano quedan como ajuste fino de 0.5 pulgadas.
+- En 4-Way Runner, las tablas inferiores se ajustan automáticamente fuera de las muescas para no dibujar una tabla donde no hay superficie de clavado.
+- Vista lateral, superior, inferior y nota de especificación usan las posiciones guardadas.
+
+
+v0.28
+- Editor compacto con selector Arriba / Abajo.
+- Arrastre directo + ajuste fino de 1/2 pulgada en ambos lados.
+- Evita superposición entre tablas y mantiene las tablas inferiores fuera de muescas 4-Way.
+- Material reciclado separado de madera nueva; conserva origen al cortar/convertir.
+
+
+v0.30
+- Firmar descarga acepta varios lotes en un mismo tráiler, cada uno con medida, cantidad y destino independiente.
+- Los lotes para desarme/scrap pueden registrarse sin medida fija.
+- Tráilers pendientes muestra solo Pendientes y Descargados hoy; el conteo diario se reinicia automáticamente por fecha.
+- La tarjeta Descargados hoy abre el historial del día y permite revisar el detalle completo de cada descarga.
+- Historial ahora permite cambiar entre Venta de pallets, Compra de madera y Descarga de tráilers.
+- Las recepciones de madera nuevas quedan registradas en el historial de compras.
