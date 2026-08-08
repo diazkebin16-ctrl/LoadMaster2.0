@@ -385,20 +385,46 @@ function technicalElevationSvg(spec,view='front'){
   const top=makeDeckSequence(spec.topBoards,spec.topSequence),bottom=makeDeckSequence(spec.bottomBoards,spec.bottomSequence),model=baseModelFor(spec),W=680,H=360,pad=76,usable=W-pad*2,topY=92,deckT=16,baseY=160,baseH=82,bottomY=baseY+baseH,edge='var(--svg-edge,#6f4928)';
   let geometry='';
   if(view==='front'){
-    const total=top.reduce((n,b)=>n+(Number(b.width)||4),0)||1,scale=usable/total;let x=pad;
-    for(let i=0;i<top.length;i++){const b=top[i],bw=(Number(b.width)||4)*scale;geometry+=`<rect x="${x.toFixed(1)}" y="${topY}" width="${Math.max(10,bw-2).toFixed(1)}" height="${deckT}" rx="2" fill="${svgWoodFill(b.width)}" stroke="${edge}"/><text x="${(x+bw/2).toFixed(1)}" y="${topY-9}" text-anchor="middle" class="svg-pos-text-large">${i+1}</text>`;x+=bw}
-    if(model.kind==='block'){for(let i=0;i<3;i++){const cx=pad+i*usable/2;geometry+=`<rect x="${cx-22}" y="${baseY+18}" width="44" height="54" rx="3" fill="var(--svg-wood-side)" stroke="${edge}"/>`}}
-    else {for(let i=0;i<model.count;i++){const cx=pad+(model.count===1?usable/2:i*usable/Math.max(1,model.count-1));geometry+=`<rect x="${cx-18}" y="${baseY}" width="36" height="${baseH}" rx="3" fill="var(--svg-wood-side)" stroke="${edge}"/>`}}
-    if(bottom.length){const bt=bottom.reduce((n,b)=>n+(Number(b.width)||4),0)||1,bs=usable/bt;let bx=pad;for(const b of bottom){const bw=(Number(b.width)||4)*bs;geometry+=`<rect x="${bx.toFixed(1)}" y="${bottomY}" width="${Math.max(10,bw-2).toFixed(1)}" height="13" rx="2" fill="${svgWoodFill(b.width)}" stroke="${edge}"/>`;bx+=bw}}
-    const caption=model.kind==='runner'?`${model.count} runners vistos de frente · entrada por este lado`:'Blocks · entrada 4 lados';
+    // Frente = se identifican los runners. Las tablas cruzan el ancho, por eso desde este lado se ven como una sola franja.
+    geometry+=`<rect x="${pad}" y="${topY}" width="${usable}" height="${deckT}" rx="2" fill="var(--svg-wood)" stroke="${edge}"/>`;
+    if(model.kind==='block'){
+      for(let i=0;i<3;i++){
+        const cx=pad+i*usable/2;
+        geometry+=`<rect x="${cx-22}" y="${baseY+18}" width="44" height="54" rx="3" fill="var(--svg-wood-side)" stroke="${edge}"/><text x="${cx}" y="${baseY+10}" text-anchor="middle" class="svg-pos-text-large">${i+1}</text>`;
+      }
+    }else{
+      for(let i=0;i<model.count;i++){
+        const cx=pad+(model.count===1?usable/2:i*usable/Math.max(1,model.count-1));
+        geometry+=`<rect x="${cx-18}" y="${baseY}" width="36" height="${baseH}" rx="3" fill="var(--svg-wood-side)" stroke="${edge}"/><text x="${cx}" y="${baseY-10}" text-anchor="middle" class="svg-pos-text-large">${i+1}</text>`;
+      }
+    }
+    if(bottom.length)geometry+=`<rect x="${pad}" y="${bottomY}" width="${usable}" height="13" rx="2" fill="var(--svg-wood)" stroke="${edge}"/>`;
+    const caption=model.kind==='runner'?`${model.count} runners numerados de izquierda a derecha · entrada por este lado`:'Blocks numerados de izquierda a derecha · entrada 4 lados';
     return `<svg viewBox="0 0 ${W} ${H}" class="pallet-3d-svg technical-view technical-plan" role="img" aria-label="Vista frontal"><rect width="100%" height="100%" class="svg-canvas"/>${dimensionLine(pad,topY-36,pad+usable,topY-36,`${spec.width||40}\"`)}${geometry}<text x="${W/2}" y="318" text-anchor="middle" class="svg-title">Vista frontal · ${model.label}</text><text x="${W/2}" y="338" text-anchor="middle" class="svg-subtitle">${caption}</text></svg>`
   }
-  // Side elevation: this is where 2-way vs 4-way runner construction is unmistakable.
-  geometry+=`<rect x="${pad}" y="${topY}" width="${usable}" height="${deckT}" rx="2" fill="var(--svg-wood)" stroke="${edge}"/>`;
-  if(model.kind==='block'){for(let i=0;i<3;i++){const cx=pad+34+i*(usable-68)/2;geometry+=`<rect x="${cx-22}" y="${baseY+17}" width="44" height="54" rx="3" fill="var(--svg-wood-side)" stroke="${edge}"/>`}}
-  else geometry+=runnerSideShape(pad+8,baseY,usable-16,baseH,model.notched);
-  if(bottom.length)geometry+=`<rect x="${pad}" y="${bottomY}" width="${usable}" height="13" rx="2" fill="var(--svg-wood)" stroke="${edge}"/>`;
-  const sideCaption=model.kind==='block'?'Block pallet · cuatro entradas':model.notched?'Runner con muescas · permite entrada lateral (4-Way)':'Runner recto continuo · bloquea entrada lateral (2-Way)';
+  // Costado = aquí se ven las puntas/perfiles de las tablas y se numeran según su orden real sobre el largo del pallet.
+  const palletLength=Math.max(1,Number(spec.length)||48);
+  const physicalWidths=top.map(b=>boardDims(b)[1]);
+  const totalBoards=physicalWidths.reduce((a,b)=>a+b,0);
+  const gap=top.length>1?Math.max(0,(palletLength-totalBoards)/(top.length-1)):0;
+  const compress=totalBoards>palletLength?palletLength/Math.max(totalBoards,1):1;
+  const sx=usable/palletLength;
+  let pos=0;
+  if(top.length){
+    for(let i=0;i<top.length;i++){
+      const b=top[i],bw=(physicalWidths[i]||4)*compress,x=pad+pos*sx,w=Math.max(8,bw*sx);
+      geometry+=`<rect x="${x.toFixed(1)}" y="${topY}" width="${w.toFixed(1)}" height="${deckT}" rx="2" fill="${svgWoodFill(physicalWidths[i])}" stroke="${edge}"/><text x="${(x+w/2).toFixed(1)}" y="${topY-9}" text-anchor="middle" class="svg-pos-text-large">${i+1}</text>`;
+      pos+=bw+(totalBoards>palletLength?0:gap);
+    }
+  }else geometry+=`<rect x="${pad}" y="${topY}" width="${usable}" height="${deckT}" rx="2" fill="var(--svg-wood)" stroke="${edge}"/>`;
+  if(model.kind==='block'){
+    for(let i=0;i<3;i++){const cx=pad+34+i*(usable-68)/2;geometry+=`<rect x="${cx-22}" y="${baseY+17}" width="44" height="54" rx="3" fill="var(--svg-wood-side)" stroke="${edge}"/>`}
+  }else geometry+=runnerSideShape(pad+8,baseY,usable-16,baseH,model.notched);
+  if(bottom.length){
+    const bWidths=bottom.map(b=>boardDims(b)[1]),bTotal=bWidths.reduce((a,b)=>a+b,0),bGap=bottom.length>1?Math.max(0,(palletLength-bTotal)/(bottom.length-1)):0,bCompress=bTotal>palletLength?palletLength/Math.max(bTotal,1):1;let bp=0;
+    for(let i=0;i<bottom.length;i++){const bw=(bWidths[i]||4)*bCompress,x=pad+bp*sx,w=Math.max(8,bw*sx);geometry+=`<rect x="${x.toFixed(1)}" y="${bottomY}" width="${w.toFixed(1)}" height="13" rx="2" fill="${svgWoodFill(bWidths[i])}" stroke="${edge}"/>`;bp+=bw+(bTotal>palletLength?0:bGap)}
+  }
+  const sideCaption=model.kind==='block'?'Las tablas superiores se numeran de izquierda a derecha · Block 4-Way':model.notched?'Tablas superiores numeradas · runner con muescas (4-Way)':'Tablas superiores numeradas · runner recto (2-Way)';
   return `<svg viewBox="0 0 ${W} ${H}" class="pallet-3d-svg technical-view technical-plan" role="img" aria-label="Vista lateral"><rect width="100%" height="100%" class="svg-canvas"/>${dimensionLine(pad,topY-36,pad+usable,topY-36,`${spec.length||48}\"`)}${geometry}<text x="${W/2}" y="318" text-anchor="middle" class="svg-title">Vista lateral · ${model.label}</text><text x="${W/2}" y="338" text-anchor="middle" class="svg-subtitle">${sideCaption}</text></svg>`
 }
 function svgPoly(points,cls){return `<polygon points="${points.map(p=>p.join(',')).join(' ')}" class="${cls}"/>`}
