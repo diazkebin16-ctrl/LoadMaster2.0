@@ -1,4 +1,4 @@
-Pallet Operations Platform — Prototype v0.19
+Pallet Operations Platform — Prototype v0.20
 
 Cambios principales de esta versión:
 - Se rehizo el módulo visual de especificaciones con planos SVG técnicos más legibles.
@@ -52,3 +52,5 @@ v0.18: Conversión de madera renovada. Permite cortar largo y convertir sección
 
 
 v0.19: Corte múltiple por pieza madre. Permite añadir varios largos editables en una sola operación, calcula el total usado y el sobrante por pieza, multiplica el desperdicio por la cantidad de piezas fuente y lo guarda en un historial. Conversión muestra además totales mensuales de desperdicio para comparar cada mes. La conversión de sección sigue usando rendimiento manual y no registra sobrantes.
+
+HOTFIX v0.20: corrige pantalla en blanco del Centro de control con datos guardados de versiones anteriores; añade migración desde v0.16-v0.19, aislamiento del cálculo de piezas pendientes y recuperación segura de vistas.

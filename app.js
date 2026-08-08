@@ -1,5 +1,5 @@
-const STORAGE='palletOpsPrototypeV019';
-const PREV_STORAGE='palletOpsPrototypeV018';
+const STORAGE='palletOpsPrototypeV020';
+const PREV_STORAGE_KEYS=['palletOpsPrototypeV019','palletOpsPrototypeV018','palletOpsPrototypeV017','palletOpsPrototypeV016'];
 const LM_HANDOFF='palletOpsLoadmasterHandoff';
 const initialState={
   settings:{historyDays:60,nextOrderNumber:1,theme:'system'},
@@ -80,7 +80,7 @@ function normalizeState(data){
   for(const o of d.orders){if(o?.palletSpec?.type==='2-way-block'||o?.palletSpec?.type==='4-way-block')o.palletSpec.type='block';for(const pr of o?.products||[])if(pr?.type==='2-way-block'||pr?.type==='4-way-block')pr.type='block'}
   return d
 }
-function loadState(){try{const raw=localStorage.getItem(STORAGE)||localStorage.getItem(PREV_STORAGE);return normalizeState(raw?JSON.parse(raw):structuredClone(initialState))}catch{return normalizeState(structuredClone(initialState))}}
+function loadState(){try{let raw=localStorage.getItem(STORAGE);if(!raw){for(const k of PREV_STORAGE_KEYS){raw=localStorage.getItem(k);if(raw)break}}return normalizeState(raw?JSON.parse(raw):structuredClone(initialState))}catch(e){console.error('No se pudo cargar el estado guardado',e);return normalizeState(structuredClone(initialState))}}
 function nextOrderId(){const n=Math.max(1,Number(state.settings.nextOrderNumber)||1);state.settings.nextOrderNumber=n+1;return String(n).padStart(4,'0')}
 function templateById(id){return (state.palletTemplates||[]).find(t=>t.id===id)}
 function orderRef(o){return `#${o.id}${o.clientOrder?` · Cliente ${o.clientOrder}`:''}`}
@@ -156,7 +156,7 @@ function pendingPiecesAcrossOrders(){
   return aggregateFinishedRequirements(reqs).map(r=>{const inventory=finishedInventoryForRequirement(r),missing=Math.max(0,r.count-inventory);return {...r,inventory,missing,ready:missing===0}})
 }
 function pendingPiecesHomeHtml(){
-  const rows=pendingPiecesAcrossOrders();
+  let rows=[];try{rows=pendingPiecesAcrossOrders()}catch(err){console.error('Error calculando piezas pendientes',err);return `<div class="section card"><h2 style="font-size:17px;margin-top:0">Piezas pendientes a utilizar</h2><div class="notification warn">No se pudieron calcular algunas órdenes antiguas. Abre y guarda nuevamente esas órdenes para actualizar sus datos.</div></div>`}
   if(!rows.length)return `<div class="section card"><h2 style="font-size:17px;margin-top:0">Piezas pendientes a utilizar</h2><div class="notification ok"><b>Listo.</b> No hay piezas pendientes para las órdenes activas.</div></div>`;
   const allReady=rows.every(r=>r.ready),body=rows.map(r=>`<tr><td><b>${pieceSizeLabel(r)}</b><div class="small">Calidad #${r.grade}</div></td><td><b>${r.count}</b></td><td>${r.inventory}</td><td>${r.missing}</td><td>${r.ready?pill('Listo','green'):pill('Pendiente','yellow')}</td></tr>`).join('');
   return `<div class="section card"><div class="section-head"><div><h2 style="font-size:17px;margin:0">Piezas pendientes a utilizar</h2><p>Necesidad total de las órdenes que aún esperan piezas.</p></div>${allReady?pill('Todas las piezas listas','green'):pill('Hay faltantes','yellow')}</div><div class="table-wrap"><table class="piece-requirements-table"><thead><tr><th>Pieza</th><th>Requeridas</th><th>En inventario</th><th>Faltante</th><th>Estado</th></tr></thead><tbody>${body}</tbody></table></div></div>`
@@ -228,7 +228,18 @@ function renderInicio(){
   <div class="section"><div class="section-head"><div><h2>Módulos</h2><p>Todos comparten las mismas órdenes; el prototipo permite moverlas por etapas.</p></div></div><div class="grid module-grid">${moduleCard('ordenes','＋','Órdenes','Crear una orden en dos pasos y reutilizar plantillas.')}${moduleCard('madera','▦','Inventario de madera','Materia prima, piezas listas y catálogo configurable.')}${moduleCard('conversion','⇄','Conversión de madera','Convertir manualmente cualquier medida a una medida inferior cuando tú lo autorices.')}${moduleCard('produccion','✂','Producción / Corte','Reservar madera, iniciar corte y liberar material.')}${moduleCard('fabricacion','⚒','Fabricación','Recibir aviso, armar pallets y liberarlos.')}${moduleCard('terminados','▣','Inventario de pallets','Producto terminado y reservado.')}${moduleCard('carga','▰','Carga y despacho','Optimizar, cargar, evidencia, firma y salida.')}${moduleCard('reportes','▥','Reportes','Resumen operativo sin crear menús innecesarios.')}</div></div>
   <div class="section grid two-col"><div class="card"><div class="section-head"><div><h2>Flujo real de una orden</h2><p>Cada botón mueve la misma orden al siguiente módulo.</p></div></div><div class="timeline"><span class="node">Inventario</span><span class="arrow">→</span><span class="node">Corte</span><span class="arrow">→</span><span class="node">Material listo</span><span class="arrow">→</span><span class="node">Fabricación</span><span class="arrow">→</span><span class="node">Carga</span><span class="arrow">→</span><span class="node">Historial</span></div><div style="height:14px"></div><button class="btn" data-go="ordenes">Crear / revisar órdenes</button></div><div class="card"><h2 style="font-size:17px;margin-top:0">Avisos automáticos</h2>${state.notifications.slice(0,4).map(n=>`<div class="notification ${n.kind==='ok'?'ok':''}" style="margin-bottom:8px">${n.text}</div>`).join('')||'<div class="small">Sin avisos.</div>'}</div></div>${pendingPiecesHomeHtml()}`
 }
-function render(){const [t,s]=views[currentView];el.title.textContent=t;el.subtitle.textContent=s;el.content.innerHTML=({inicio:renderInicio,ordenes:renderOrdenes,madera:renderMadera,conversion:renderConversion,produccion:renderProduccion,fabricacion:renderFabricacion,terminados:renderTerminados,carga:renderCarga,reportes:renderReportes,historial:renderHistorial,configuracion:renderConfiguracion})[currentView]();bindDynamic();applyTheme()}
+function render(){
+  try{
+    if(!views[currentView])currentView='inicio';
+    const [t,s]=views[currentView];el.title.textContent=t;el.subtitle.textContent=s;
+    const renderer=({inicio:renderInicio,ordenes:renderOrdenes,madera:renderMadera,conversion:renderConversion,produccion:renderProduccion,fabricacion:renderFabricacion,terminados:renderTerminados,carga:renderCarga,reportes:renderReportes,historial:renderHistorial,configuracion:renderConfiguracion})[currentView];
+    el.content.innerHTML=renderer?renderer():renderInicio();bindDynamic();applyTheme();
+  }catch(err){
+    console.error('Error al dibujar la vista',currentView,err);
+    el.content.innerHTML=`<div class="card"><h2>No se pudo cargar esta vista</h2><p class="small">Se detectó un dato antiguo o incompatible. La aplicación sigue disponible.</p><button class="btn" id="recoverView">Volver al inicio</button></div>`;
+    document.getElementById('recoverView')?.addEventListener('click',()=>{currentView='inicio';location.hash='inicio';render()});applyTheme();
+  }
+}
 function renderMadera(){const raw=state.lumber.filter(x=>x.category==='raw'),finished=state.lumber.filter(x=>x.category==='finished');const rows=list=>list.map(x=>{const a=availableOf(x);return `<tr><td><b>${x.size}</b><div class="small">${x.family}</div></td><td><b>#${x.grade}</b></td><td>${x.qty}</td><td>${x.reserved||0}</td><td>${a}</td><td>${x.min||0}</td><td>${a<(x.min||0)?pill('Bajo','yellow'):pill('Bien','green')}</td></tr>`}).join('');return `<div class="toolbar"><button class="btn" data-action="receiveWood">+ Recibir madera</button><button class="btn secondary" data-action="addMaterial">+ Agregar tipo de madera</button><button class="btn secondary" data-go="conversion">Conversión manual</button></div><div class="section-head"><div><h2>Materia prima</h2><p>2×4, 2×6, 4×4, 4×6 y cualquier medida que agregues al catálogo.</p></div></div><div class="table-wrap"><table><thead><tr><th>Medida</th><th>Calidad</th><th>Existencia</th><th>Reservado</th><th>Disponible</th><th>Mínimo</th><th>Estado</th></tr></thead><tbody>${rows(raw)}</tbody></table></div><div class="section-head section"><div><h2>Piezas ya cortadas</h2><p>El planificador usa estas piezas primero antes de cortar madera larga.</p></div></div><div class="table-wrap"><table><thead><tr><th>Pieza lista</th><th>Calidad</th><th>Existencia</th><th>Reservado</th><th>Disponible</th><th>Mínimo</th><th>Estado</th></tr></thead><tbody>${rows(finished)||'<tr><td colspan="7">Sin piezas listas.</td></tr>'}</tbody></table></div><div class="section notification info"><b>Regla:</b> producción usa primero piezas listas; después corta 2×4/2×6 de inventario. Ninguna medida se convierte automáticamente; las conversiones siempre requieren tu confirmación.</div>`}
 function wasteMonthKey(ts){const d=new Date(ts||Date.now());return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 function wasteMonthLabel(key){const [y,m]=String(key).split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('es-US',{month:'long',year:'numeric'})}
