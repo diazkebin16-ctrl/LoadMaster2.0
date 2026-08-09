@@ -1,0 +1,10 @@
+/* Modo independiente: los demás módulos no se muestran. */
+.order-module-mode .compat-shell{display:none!important}
+.order-module-mode{min-height:100vh;background:var(--bg,#f3f6f5)}
+.module-home{min-height:100vh;display:grid;place-items:center;padding:24px}
+.module-home-card{width:min(560px,100%);background:var(--surface,#fff);border:1px solid var(--border,#dce5e1);border-radius:18px;padding:30px;box-shadow:0 18px 50px rgba(0,0,0,.08);text-align:center}
+.module-home-card .brand-mark{margin:0 auto 14px}
+.module-home-card h1{margin:0 0 8px}
+.module-home-card p{color:var(--muted,#65736d);margin:0 0 22px}
+/* El formulario de Nueva orden usa fullscreen en la app original. */
+.order-module-mode dialog.fullscreen{z-index:1000}

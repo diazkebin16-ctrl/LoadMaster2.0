@@ -1,13 +1,21 @@
-# Add Order Module — extracted from Pallet Operations v0.48
+# Add Order Module v0.48 — CORREGIDO
 
-Este paquete fue preparado para continuar el trabajo de **Agregar orden** en un chat separado.
+Este paquete sí es ejecutable con **Live Server**.
 
-## Contenido
-- `order-module-source.js`: funciones extraídas del flujo de Nueva orden y sus helpers visuales/materiales inmediatos.
-- `styles.css`: estilos de la versión v0.48 como referencia visual para conservar la interfaz.
-- `RESUMEN_PARA_NUEVO_CHAT.txt`: especificación funcional acumulada y reglas que deben respetarse.
-- `INTEGRATION_CONTRACT.md`: contrato de datos para regresar el módulo al sistema principal.
+## Qué debe aparecer
+Al abrir `index.html` con Live Server, el formulario **Nueva orden · Paso 1 de 2** debe abrirse automáticamente a pantalla completa.
+Después de completar Paso 1 y pulsar Continuar, aparece **Paso 2 de 2** para productos/pallets.
 
-`order-module-source.js` es una extracción de desarrollo, no una copia del sistema completo. Depende de servicios del host como estado de clientes, plantillas, persistencia, diálogo y guardado final. En el nuevo chat se puede convertir en un pequeño módulo ejecutable independiente manteniendo el contrato de integración.
+No se muestra el menú general de Pallet Operations ni los otros módulos. Si cancelas o cierras el formulario, aparece una pantalla simple con el botón **Abrir Agregar orden** para volver a entrar.
 
-La fuente original usada para esta extracción fue `Pallet-Operations-Platform-Prototype-v0.48.zip`.
+## Archivos
+- `index.html`: entrada ejecutable independiente.
+- `module.js`: arranque automático del flujo de Agregar orden.
+- `module.css`: oculta la aplicación general y deja solo este módulo.
+- `app.js`: motor v0.48 usado para conservar el comportamiento y las dependencias originales del flujo.
+- `styles.css`: estilos originales de v0.48.
+- `RESUMEN_PARA_NUEVO_CHAT.txt`: reglas funcionales para continuar trabajando en otro chat.
+- `INTEGRATION_CONTRACT.md`: notas para reintegrar el módulo al proyecto principal.
+
+## Importante para el chat nuevo
+Trabajar únicamente el flujo **Agregar orden (Paso 1 + Paso 2)**. No rediseñar otros módulos. Mantener compatibilidad con el contrato de integración para que el ZIP final pueda volver a incorporarse a Pallet Operations.

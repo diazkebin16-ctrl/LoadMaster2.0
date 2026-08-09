@@ -4,44 +4,63 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0d5c4a" />
-  <title>Pallet Operations — Prototipo por etapas</title>
+  <title>Agregar orden — módulo independiente</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="module.css" />
 </head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="brand-mark">PO</div><div><strong>Pallet Operations</strong><span>Prototipo funcional por etapas · v0.30</span></div></div>
-      <nav aria-label="Módulos principales">
-        <button class="nav-btn active" data-view="inicio"><span>⌂</span> Inicio</button>
-        <button class="nav-btn" data-view="ordenes"><span>＋</span> Órdenes</button>
-        <button class="nav-btn" data-view="madera"><span>▦</span> Inventario de madera</button>
-        <button class="nav-btn" data-view="conversion"><span>⇄</span> Conversión de madera</button>
-        <button class="nav-btn" data-view="trailers"><span>▤</span> Tráilers pendientes</button>
-        <button class="nav-btn" data-view="desarme"><span>♻</span> Desarme reciclado</button>
-        <button class="nav-btn" data-view="produccion"><span>✂</span> Producción / Corte</button>
-        <button class="nav-btn" data-view="fabricacion"><span>⚒</span> Fabricación de pallets</button>
-        <button class="nav-btn" data-view="terminados"><span>▣</span> Inventario de pallets</button>
-        <button class="nav-btn" data-view="carga"><span>▰</span> Carga y despacho</button>
-        <button class="nav-btn" data-view="reportes"><span>▥</span> Reportes</button>
-        <button class="nav-btn" data-view="resumen"><span>≡</span> Resumen</button>
-        <button class="nav-btn" data-view="historial"><span>↻</span> Historial</button>
-        <button class="nav-btn" data-view="configuracion"><span>⚙</span> Configuración</button>
-      </nav>
-      <div class="sidebar-footer">Motor integrado: <b>LoadMaster AI v5.58</b><br><span>Datos conectados por etapas · preparación automática de carga.</span></div>
-    </aside>
+<body class="order-module-mode">
+  <!--
+    Shell mínimo de compatibilidad para reutilizar exactamente el flujo de
+    Agregar orden de Pallet Operations v0.48. No expone los demás módulos.
+  -->
+  <div class="module-home" id="moduleHome">
+    <div class="module-home-card">
+      <div class="brand-mark">PO</div>
+      <h1>Módulo · Agregar orden</h1>
+      <p>Entorno independiente para trabajar únicamente el flujo Paso 1 + Paso 2.</p>
+      <button class="btn" id="openOrderModule">Abrir Agregar orden</button>
+    </div>
+  </div>
 
+  <div class="compat-shell" aria-hidden="true">
+    <aside class="sidebar" id="sidebar">
+      <nav><button class="nav-btn active" data-view="inicio">Inicio</button></nav>
+    </aside>
     <main class="main">
       <header class="topbar">
-        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">☰</button>
-        <div><h1 id="viewTitle">Centro de control</h1><p id="viewSubtitle"></p></div>
-        <div class="top-actions"><label class="quick-theme" title="Apariencia"><span>◐</span><select id="themeQuick" aria-label="Tema"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select></label><span class="badge online">● Demo activa</span><button class="icon-btn" id="resetDemo" title="Restablecer demo">↺</button></div>
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <div><h1 id="viewTitle">Agregar orden</h1><p id="viewSubtitle"></p></div>
+        <div class="top-actions">
+          <select id="themeQuick"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select>
+          <button id="resetDemo">↺</button>
+        </div>
       </header>
       <section id="content" class="content"></section>
     </main>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <dialog id="dialog" class="dialog"><form method="dialog"><div class="dialog-head"><div><h2 id="dialogTitle"></h2><p id="dialogSubtitle"></p></div><div class="dialog-head-actions"><label class="quick-theme dialog-theme" title="Apariencia"><span>◐ Tema</span><select id="dialogThemeQuick" aria-label="Tema en pantalla completa"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select></label><button class="close-btn" value="cancel">×</button></div></div><div id="dialogBody"></div></form></dialog>
+  <dialog id="dialog" class="dialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <div><h2 id="dialogTitle"></h2><p id="dialogSubtitle"></p></div>
+        <div class="dialog-head-actions">
+          <label class="quick-theme dialog-theme" title="Apariencia">
+            <span>◐ Tema</span>
+            <select id="dialogThemeQuick" aria-label="Tema">
+              <option value="light">Claro</option>
+              <option value="dark">Oscuro</option>
+              <option value="system">Automático</option>
+            </select>
+          </label>
+          <button class="close-btn" value="cancel">×</button>
+        </div>
+      </div>
+      <div id="dialogBody"></div>
+    </form>
+  </dialog>
+
   <script src="app.js"></script>
+  <script src="module.js"></script>
 </body>
 </html>
