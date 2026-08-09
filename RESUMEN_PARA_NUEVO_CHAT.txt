@@ -1,0 +1,165 @@
+PROYECTO: PALLET OPERATIONS — MÓDULO AISLADO “AGREGAR ORDEN”
+BASE DE ORIGEN: Pallet Operations v0.48
+
+OBJETIVO DEL NUEVO CHAT
+Trabajar ÚNICAMENTE el flujo completo de “Agregar orden”, aislado del resto de Pallet Operations, para poder mejorarlo sin tocar inventario, producción, fabricación, carga, historial, reportes, LoadMaster ni otros módulos.
+
+REGLA DE TRABAJO
+- No eliminar funciones existentes a menos que se pida explícitamente.
+- Hacer cambios pequeños y probarlos antes de la siguiente modificación.
+- Mantener compatibilidad con el objeto de orden que espera Pallet Operations para poder reintegrar este módulo más adelante.
+- El módulo debe cubrir desde el Paso 1 hasta guardar la orden.
+
+PASO 1 — DATOS DE LA ORDEN
+1. Cliente:
+   - No escribir el nombre manualmente como flujo principal.
+   - Selector “Seleccionar cliente”.
+   - Botón “+ Añadir cliente” si el cliente no existe.
+   - Los clientes existentes pueden cargar preferencias guardadas.
+2. Número de orden del cliente: opcional.
+3. Referencia del cliente.
+4. Fecha de entrega: selector de fecha.
+5. Horario de recepción:
+   - No es una cita exacta.
+   - Debe ser un rango “Desde” y “Hasta”.
+   - Validar que “Hasta” sea posterior a “Desde”.
+   - El horario NO necesita mostrarse en la tabla principal de órdenes; se ve en la especificación/detalle.
+6. Tipo de entrega:
+   - Recogida del cliente.
+   - Envío de fábrica.
+7. Retorno de tráiler:
+   - Sin regla definida.
+   - Regresa el mismo día.
+   - Se queda varios días.
+8. Nota logística del tráiler.
+9. Preferencias de cliente:
+   - Mantener las opciones para guardar QC como predeterminado del cliente.
+   - Mantener las opciones para guardar HT como predeterminado del cliente.
+   - Mantener opción para guardar retorno de tráiler como preferencia.
+   - NO volver a crear dos casillas superiores globales QC/HT que marquen toda la orden automáticamente; esas se eliminaron del bloque superior.
+10. Notas generales.
+
+PASO 2 — PRODUCTOS / PALLETS
+Una misma orden puede tener varias medidas/condiciones diferentes. Cada medida tiene su propia condición.
+
+CONDICIONES DISPONIBLES
+- Pallet nuevo.
+- Pallet reciclado.
+- Reacondicionado / reparación.
+- 48×40 A.
+- 48×40 AA.
+- 48×40 B.
+- Combo runner.
+- Combo board.
+- Combo.
+
+REGLAS DE CONDICIÓN
+Pallet nuevo:
+- Se capturan runners/tablas/blocks según tipo.
+- Calidad predeterminada para cualquier material nuevo = #4.
+- Se puede cambiar manualmente a Reciclado, #1, #2, #3 o #4.
+
+Pallet reciclado:
+- Calidad predeterminada de runners, tablas y blocks = Reciclado.
+- El selector sigue permitiendo Reciclado, #1, #2, #3 y #4.
+
+Combo runner:
+- Runner nuevo, resto reciclado.
+- Runner predeterminado = #4.
+- Tablas predeterminadas = Reciclado.
+- Todo sigue editable manualmente.
+
+Combo board:
+- Tablas nuevas, runners reciclados.
+- Tablas predeterminadas = #4.
+- Runner predeterminado = Reciclado.
+- El material SÍ queda definido desde el Paso 2.
+- La sección resumen debe llamarse “Especificaciones”, no “pendiente de definir”.
+
+Combo:
+- Al crear la orden todavía no se sabe qué parte acabará siendo nueva o reciclada.
+- Aun así se deben capturar cantidades, medidas, runners, tablas arriba y tablas abajo.
+- Mantener visibles los selectores de calidad como regla general para no tener que modificar el formulario por cada caso.
+- El inventario del Combo no debe descontarse al crear la orden.
+- En el sistema principal, al finalizar fabricación / pasar a Ready to Dispatch se registrará qué material se usó realmente y entonces se descontará inventario.
+- En “Material que se utilizará” debe poder mostrarse la medida y cantidad de piezas; la definición final de origen/material se resuelve después según el flujo del sistema principal.
+
+Reacondicionado / reparación:
+- No debe obligar a capturar tablas, runners o especificación completa de fabricación desde la orden.
+
+48×40 A / AA / B:
+- No pedir tablas arriba, abajo ni runners.
+- Siempre 48×40.
+- Siempre 4-Way.
+- Se pueden girar.
+
+CALIDADES — REGLA GENERAL FIJA
+En TODOS los selectores de calidad que existan para runner, tablas o blocks deben aparecer:
+- Reciclado
+- #1
+- #2
+- #3
+- #4
+Nunca volver a eliminar por completo esos selectores salvo solicitud explícita.
+Todo material nuevo usa #4 como predeterminado.
+
+MEDIDAS DE MADERA
+Tablas:
+- Se pueden escoger medidas existentes.
+- Debe existir “Crear nueva medida…” para agregar una medida no existente.
+
+Runners:
+- Ya NO están limitados a 2×4.
+- Debe existir selector de medida de runner.
+- Ejemplos: 2×4, 3×4, 4×4, 4×6.
+- Debe existir “Crear nueva medida…” para cualquier medida adicional.
+- Esta flexibilidad debe existir en cualquier formulario del módulo donde se capture un runner, incluyendo base de crate.
+
+TIPOS DE PRODUCTO
+- 2-Way Runner.
+- 4-Way Runner.
+- Block.
+- 2-Way Crate.
+- 4-Way Crate.
+Las reglas de giro y altura máxima se conservan según el tipo.
+
+EDITOR VISUAL DE TABLAS
+- Vista superior/dibujo: no permitir sobreponer tablas accidentalmente.
+- Tarjetas inferiores del editor: sí se pueden arrastrar libremente.
+- Se puede colocar una tarjeta exactamente sobre otra para representar tabla doble (x2, x3, etc.).
+- Botones de ajuste fino -½” y +½” deben ser compactos y caber dentro de la tarjeta.
+- En pantallas pequeñas las tarjetas deben acomodarse en varias filas, sin obligar a desplazamiento horizontal largo.
+- En 4-Way se conserva la protección de las muescas cuando corresponda.
+
+MÚLTIPLES MEDIDAS EN UNA ORDEN
+- “+ Agregar esta medida” guarda la medida actual y permite capturar otra.
+- Una orden puede mezclar, por ejemplo, pallets nuevos, reciclados, reparación y combos.
+- La condición pertenece a cada medida, no a toda la orden.
+
+PLANTILLAS
+- Se puede aplicar una plantilla existente.
+- Se puede guardar una descripción como nueva plantilla.
+
+SALIDA / CONTRATO PARA REINTEGRACIÓN
+Al guardar, el módulo debe producir un objeto de orden compatible con Pallet Operations con, como mínimo:
+- id interno
+- clientOrder
+- clientReference
+- customer
+- deliveryDate
+- deliveryTimeFrom
+- deliveryTimeTo
+- shipping
+- trailerReturn
+- trailerReturnNote
+- notes
+- products[]
+- qty total
+- condition (única o mixed)
+- loadItems[]
+- palletSpecs / palletSpec
+- stage inicial = waiting_material
+Cada elemento products[] debe conservar medida, cantidad, condición, tipo, runners/blocks/tablas, calidad, precio, posiciones visuales, posibilidad de giro y altura máxima.
+
+IMPORTANTE
+Este ZIP es el módulo de desarrollo aislado. Cuando quede terminado en el nuevo chat, devolver un ZIP del módulo. Luego ese ZIP se llevará al chat principal para integrarlo otra vez a Pallet Operations sin rehacer el módulo.
