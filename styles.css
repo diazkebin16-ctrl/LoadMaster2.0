@@ -25,7 +25,7 @@
 .product-list{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfdfc}.product-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.product-chip:first-of-type{margin-top:8px}.advanced-box{margin-top:14px;padding:12px;border:1px dashed #b7c8c1;border-radius:12px;background:#fbfdfc}.advanced-box summary{cursor:pointer;font-weight:700}.advanced-box .check-row{margin-top:9px}.conversion-suggest{margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff6df;border:1px solid #ead18b;font-size:12px}.conversion-suggest div{margin-top:4px}
 
 /* v0.9 · editor visual de pallet + largos independientes */
-.board-row-v09{grid-template-columns:1fr 1fr 1fr 1fr auto}.deck-help{margin-top:8px;padding:8px 10px;border-radius:9px;background:#f1f6f4}.pallet-design-box{margin-top:14px}.pallet-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}.pallet-preview-grid h4{margin:0 0 7px;font-size:13px}.pallet-svg{display:block;width:100%;background:#f8faf9;border:1px solid var(--line);border-radius:12px}.svg-frame{fill:#f6f2e9;stroke:#9a8f79;stroke-width:2}.svg-board{stroke:#725f3b;stroke-width:1.2;fill:#d7b681}.svg-board-6{fill:#bd8e55}.svg-board-4{fill:#e1c69a}.svg-label{font-size:10px;fill:#473c29;font-weight:700}.deck-sequence{margin-top:9px}.deck-sequence-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}.deck-strip{display:flex;gap:6px;overflow-x:auto;padding:5px 2px 8px}.deck-board{min-width:78px;border:1px solid #b9ab90;background:#f2dfbc;border-radius:9px;padding:6px;cursor:grab;user-select:none}.deck-board.board-6{background:#dfbd87}.deck-board span{display:inline-flex;width:18px;height:18px;border-radius:99px;align-items:center;justify-content:center;background:#fff8;font-size:10px;margin-right:4px}.deck-board b{font-size:12px}.deck-board small{display:block;font-size:10px;color:#655a47;margin-top:3px}.deck-move{display:flex;gap:4px;margin-top:5px}.deck-move button{border:1px solid #c9bda8;background:#fff;border-radius:6px;padding:2px 7px;cursor:pointer}.spec-note{margin-top:12px;padding:12px;border-radius:11px;background:#f6f9f8;border:1px solid var(--line);font-size:12px;line-height:1.55}.spec-note>div{margin-top:4px}.spec-product{padding:6px 0 16px;border-bottom:1px solid var(--line)}.spec-product:last-of-type{border-bottom:0}
+.board-row-v09{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr auto}.deck-help{margin-top:8px;padding:8px 10px;border-radius:9px;background:#f1f6f4}.pallet-design-box{margin-top:14px}.pallet-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}.pallet-preview-grid h4{margin:0 0 7px;font-size:13px}.pallet-svg{display:block;width:100%;background:#f8faf9;border:1px solid var(--line);border-radius:12px}.svg-frame{fill:#f6f2e9;stroke:#9a8f79;stroke-width:2}.svg-board{stroke:#725f3b;stroke-width:1.2;fill:#d7b681}.svg-board-6{fill:#bd8e55}.svg-board-4{fill:#e1c69a}.svg-label{font-size:10px;fill:#473c29;font-weight:700}.deck-sequence{margin-top:9px}.deck-sequence-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}.deck-strip{display:flex;gap:6px;overflow-x:auto;padding:5px 2px 8px}.deck-board{min-width:78px;border:1px solid #b9ab90;background:#f2dfbc;border-radius:9px;padding:6px;cursor:grab;user-select:none}.deck-board.board-6{background:#dfbd87}.deck-board span{display:inline-flex;width:18px;height:18px;border-radius:99px;align-items:center;justify-content:center;background:#fff8;font-size:10px;margin-right:4px}.deck-board b{font-size:12px}.deck-board small{display:block;font-size:10px;color:#655a47;margin-top:3px}.deck-move{display:flex;gap:4px;margin-top:5px}.deck-move button{border:1px solid #c9bda8;background:#fff;border-radius:6px;padding:2px 7px;cursor:pointer}.spec-note{margin-top:12px;padding:12px;border-radius:11px;background:#f6f9f8;border:1px solid var(--line);font-size:12px;line-height:1.55}.spec-note>div{margin-top:4px}.spec-product{padding:6px 0 16px;border-bottom:1px solid var(--line)}.spec-product:last-of-type{border-bottom:0}
 @media(max-width:760px){.board-row-v09{grid-template-columns:1fr 1fr}.board-row-v09 .remove-board{grid-column:2}.pallet-preview-grid{grid-template-columns:1fr}}
 @media print{.sidebar,.topbar,.dialog-head,.dialog-actions{display:none!important}.dialog{position:static!important;display:block!important;max-width:none!important;width:100%!important;box-shadow:none!important}.dialog::backdrop{display:none}.pallet-preview-grid{grid-template-columns:1fr 1fr}.pallet-svg{break-inside:avoid}}
 
@@ -232,3 +232,99 @@ html[data-theme="dark"] .material-plan-group{border-color:var(--line)}
 .requirement-toggle:has(input:checked){border-color:var(--accent2);background:var(--soft)}
 @media(max-width:760px){.order-requirement-options{grid-template-columns:1fr}}
 .customer-picker-row{display:flex;gap:8px;align-items:stretch}.customer-picker-row select{min-width:0;flex:1}.customer-picker-row .btn{white-space:nowrap}@media(max-width:620px){.customer-picker-row{flex-direction:column}.customer-picker-row .btn{width:100%}}
+
+/* Add Order · dimensiones separadas de material */
+.board-row-v09 input[type="number"]{font-variant-numeric:tabular-nums}
+@media(max-width:900px){.board-row-v09{grid-template-columns:1fr 1fr 1fr}.board-row-v09 .remove-board{grid-column:auto;justify-self:end}}
+@media(max-width:560px){.board-row-v09{grid-template-columns:1fr 1fr}.board-row-v09 .remove-board{grid-column:2;justify-self:end}}
+
+/* Add Order · costos de producto */
+.cost-summary-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card,var(--panel,var(--surface,transparent)))}
+.cost-summary-box>div{display:flex;flex-direction:column;gap:4px}
+.cost-summary-box b{font-size:18px}
+.cost-summary-box .wide{grid-column:1/-1}
+@media(max-width:560px){.cost-summary-box{grid-template-columns:1fr}.cost-summary-box .wide{grid-column:auto}}
+
+/* Costos · compatible con modo oscuro */
+.cost-summary-box{
+  color:inherit;
+}
+.cost-summary-box .small{
+  color:var(--muted,currentColor);
+}
+[data-theme="dark"] .cost-summary-box,
+.dark .cost-summary-box,
+body.dark .cost-summary-box{
+  background:var(--card,var(--panel,var(--surface,#171a1f)));
+  color:var(--text,#f3f4f6);
+  border-color:var(--line,#343a40);
+}
+[data-theme="dark"] .cost-summary-box .small,
+.dark .cost-summary-box .small,
+body.dark .cost-summary-box .small{
+  color:var(--muted,#aeb6c2);
+}
+
+/* Costo de material desglosado */
+.material-cost-breakdown{display:block}
+.material-cost-lines{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.material-cost-line,.material-cost-total{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel,var(--surface,transparent))}
+.material-cost-line>div{min-width:0}
+.material-cost-line>b,.material-cost-total>b{white-space:nowrap}
+.material-cost-total{margin-top:10px;font-size:15px}
+.material-cost-total.order-total{font-size:16px;font-weight:700}
+[data-theme="dark"] .material-cost-line,[data-theme="dark"] .material-cost-total,.dark .material-cost-line,.dark .material-cost-total,body.dark .material-cost-line,body.dark .material-cost-total{background:var(--panel,var(--surface,#171a1f));border-color:var(--line,#343a40);color:var(--text,#f3f4f6)}
+
+/* Valor y ganancia de la medida */
+.profit-summary{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.profit-summary-line{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 10px;font-size:16px}
+.profit-summary-line.profit,.profit-summary-line.total-profit{font-size:17px;font-weight:700}
+.profit-summary .small{padding:0 10px 6px}
+[data-theme="dark"] .profit-summary,.dark .profit-summary,body.dark .profit-summary{border-color:var(--line,#343a40);color:var(--text,#f3f4f6)}
+
+/* QC / HT por medida */
+.product-requirements{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) auto auto;
+  gap:12px;
+  align-items:center;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--card,var(--panel,var(--surface,transparent)));
+}
+.product-requirements .check-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.product-requirements input[type="checkbox"]{
+  width:18px;
+  height:18px;
+}
+[data-theme="dark"] .product-requirements,
+.dark .product-requirements,
+body.dark .product-requirements{
+  background:var(--card,var(--panel,var(--surface,#171a1f)));
+  border-color:var(--line,#343a40);
+  color:var(--text,#f3f4f6);
+}
+@media(max-width:700px){
+  .product-requirements{grid-template-columns:1fr 1fr}
+  .product-requirements>div:first-child{grid-column:1/-1}
+}
+
+/* Paso 2 · contenido mixto del pedido */
+.order-content-menu{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card,var(--panel,var(--surface,transparent)))}
+.order-content-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.inventory-order-picker{border:1px solid var(--line)}
+.inventory-order-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.inventory-order-summary>div{display:flex;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel,var(--surface,transparent))}
+.inventory-order-summary b{font-size:17px}
+[data-theme="dark"] .order-content-menu,[data-theme="dark"] .inventory-order-summary>div,.dark .order-content-menu,.dark .inventory-order-summary>div,body.dark .order-content-menu,body.dark .inventory-order-summary>div{background:var(--card,var(--panel,var(--surface,#171a1f)));border-color:var(--line,#343a40);color:var(--text,#f3f4f6)}
+@media(max-width:760px){.order-content-menu{align-items:stretch;flex-direction:column}.inventory-order-summary{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.inventory-order-summary{grid-template-columns:1fr}}
+
+/* Producto adicional: inventario o compra */
+.additional-source-tabs{display:flex;gap:8px;flex-wrap:wrap}
