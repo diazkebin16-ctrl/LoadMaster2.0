@@ -123,3 +123,8 @@ El Paso 2 distingue entre:
 
 Estas líneas guardan nombre, tipo/material, descripción/medida, cantidad, costo estimado de compra y precio de venta. No reservan ni descuentan inventario hasta que en el futuro se conecten al flujo de compra/recepción. Se mantienen separadas de `products[]` para no contaminar la fabricación de pallets.
 `additionalItems[]` es el nombre nuevo del modelo; `inventoryItems[]` se mantiene como copia de compatibilidad al guardar órdenes existentes.
+
+
+## Producto adicional · Describir producto
+La ruta manual ahora captura tipo de producto, medida/descripción, calidad opcional, cantidad, unidad de venta y precio de venta.
+No existe un campo de costo de compra en la orden. El costo se resuelve contra Inventario por tipo + medida/descripción + calidad y usa el costo promedio registrado allí. Si todavía no existe coincidencia, el costo queda pendiente.
