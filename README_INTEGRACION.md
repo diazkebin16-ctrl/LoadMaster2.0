@@ -128,3 +128,18 @@ Estas líneas guardan nombre, tipo/material, descripción/medida, cantidad, cost
 ## Producto adicional · Describir producto
 La ruta manual ahora captura tipo de producto, medida/descripción, calidad opcional, cantidad, unidad de venta y precio de venta.
 No existe un campo de costo de compra en la orden. El costo se resuelve contra Inventario por tipo + medida/descripción + calidad y usa el costo promedio registrado allí. Si todavía no existe coincidencia, el costo queda pendiente.
+
+
+## QC / HT en productos adicionales
+Cada línea adicional guarda `qcRequired` y `htRequired`, tanto al seleccionar del inventario como al describir un producto. Si cualquier producto adicional requiere QC o HT, la orden también queda marcada globalmente con ese requisito.
+
+
+## Nota opcional por línea
+`products[]` y `additionalItems[]` pueden guardar `itemNote`.
+La nota pertenece a una medida/producto específico, no a toda la orden. Se usa para instrucciones como flejado por tamaño de pila, pintura, empaque u otras indicaciones del cliente y se muestra en la especificación de la orden.
+
+
+## Buscadores en selectores
+Los selectores extensos usan el componente reutilizable `enhanceSearchableSelects()`.
+Se activa mediante `data-search-select` y filtra opciones por texto ignorando mayúsculas, acentos y la diferencia entre `×` y `x`. Las opciones de crear/agregar (`__...__`) permanecen visibles durante la búsqueda.
+Se usa en plantillas, productos del inventario, tipos de producto, medidas/materiales de runner, recepción de inventario y fuente de conversión.

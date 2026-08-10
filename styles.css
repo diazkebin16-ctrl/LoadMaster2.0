@@ -328,3 +328,27 @@ body.dark .product-requirements{
 
 /* Producto adicional: inventario o compra */
 .additional-source-tabs{display:flex;gap:8px;flex-wrap:wrap}
+
+/* QC / HT en producto adicional */
+.additional-requirements{display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding-top:4px}
+.additional-requirements .check-row{display:flex;align-items:center;gap:8px}
+.additional-requirements input[type="checkbox"]{width:18px;height:18px}
+
+/* Notas opcionales por producto */
+.item-note-box{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card,var(--panel,var(--surface,transparent)))}
+.item-note-box label{display:flex;flex-direction:column;gap:7px}
+.item-note-box textarea,.inventory-order-picker textarea{width:100%;resize:vertical;min-height:74px}
+.item-instruction{margin-top:12px;white-space:pre-wrap}
+[data-theme="dark"] .item-note-box,.dark .item-note-box,body.dark .item-note-box{background:var(--card,var(--panel,var(--surface,#171a1f)));border-color:var(--line,#343a40);color:var(--text,#f3f4f6)}
+
+/* Selector con buscador reutilizable */
+.searchable-select{display:flex;flex-direction:column;gap:7px;width:100%}
+.searchable-select-input{width:100%;min-width:0}
+.searchable-select select{width:100%}
+[data-theme="dark"] .searchable-select-input,
+.dark .searchable-select-input,
+body.dark .searchable-select-input{
+  background:var(--input,var(--panel,var(--surface,#171a1f)));
+  color:var(--text,#f3f4f6);
+  border-color:var(--line,#343a40);
+}
