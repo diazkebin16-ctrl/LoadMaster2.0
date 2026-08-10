@@ -185,3 +185,15 @@ Cada `productDefinition` guarda `fields[]`. Campos soportados:
 Orden e Inventario generan sus formularios desde la misma lista.
 Ejemplo: Aserrín con `fields: ["weight","quality"]` muestra únicamente Peso + Calidad; en Orden se agrega el Precio de venta y en Inventario se agrega Existencia + Costo. Si `weight` existe sin `quantity`, el peso se usa como cantidad requerida para disponibilidad.
 La identidad de coincidencia automática se genera dinámicamente a partir de los campos seleccionados.
+
+
+## Unidades y campos totalmente configurables
+`customUnits[]` guarda unidades creadas por el usuario. Todos los selectores de unidad generados por una definición incluyen `+ Añadir nueva unidad…`.
+
+La creación de un producto ya no obliga a escoger combinaciones como “Por peso / bolsa”. Se seleccionan campos individualmente (`fields[]`), sin campos preseleccionados. Por ejemplo:
+- Aserrín: `weight + quality`
+- OSB: `thickness + width + length + quality + quantity`
+- Clavos: `description + quantity`
+- Producto especial: cualquier combinación.
+
+La unidad predeterminada es independiente de los campos. Si el usuario necesita una nueva (`ton`, `rollo`, `galón`, etc.), se crea y queda reutilizable en Orden e Inventario.
