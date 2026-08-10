@@ -176,3 +176,12 @@ El mismo schema controla:
 3. cómo se busca una coincidencia automática.
 
 Los productos no dimensionales viven en `genericInventory[]`; los dimensionales continúan usando `lumber[]` para conservar corte/conversión.
+
+
+## Campos dinámicos por definición de producto
+Cada `productDefinition` guarda `fields[]`. Campos soportados:
+`thickness`, `width`, `length`, `weight`, `quality`, `description`, `quantity`, `unit`.
+
+Orden e Inventario generan sus formularios desde la misma lista.
+Ejemplo: Aserrín con `fields: ["weight","quality"]` muestra únicamente Peso + Calidad; en Orden se agrega el Precio de venta y en Inventario se agrega Existencia + Costo. Si `weight` existe sin `quantity`, el peso se usa como cantidad requerida para disponibilidad.
+La identidad de coincidencia automática se genera dinámicamente a partir de los campos seleccionados.
