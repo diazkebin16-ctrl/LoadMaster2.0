@@ -143,3 +143,36 @@ La nota pertenece a una medida/producto específico, no a toda la orden. Se usa 
 Los selectores extensos usan el componente reutilizable `enhanceSearchableSelects()`.
 Se activa mediante `data-search-select` y filtra opciones por texto ignorando mayúsculas, acentos y la diferencia entre `×` y `x`. Las opciones de crear/agregar (`__...__`) permanecen visibles durante la búsqueda.
 Se usa en plantillas, productos del inventario, tipos de producto, medidas/materiales de runner, recepción de inventario y fuente de conversión.
+
+
+## Identidad 2-Way / 4-Way para runners y blocks
+`way` forma parte de la identidad de una pieza terminada, independientemente de si el material es nuevo o reciclado.
+- Un requisito `2×4×48 · 4-Way` solo se satisface con inventario terminado que también sea `4-Way`.
+- Una pieza `2×4×48` sin clasificación no cuenta como lista para un runner 4-Way.
+- Runner, Base crate y Block heredan `type.entry` (`2-way` / `4-way`) como requisito estructural.
+- Conversión incluye la operación `Convertir 2-Way / 4-Way (notch)`, que conserva material, familia, largo y calidad y crea una pieza terminada con el `way` destino.
+
+
+## Auto-enlace Producto descrito ↔ Inventario
+Una línea descrita conserva identidad estructurada: tipo/material, dimensiones parseadas desde la descripción, calidad, cantidad y unidad.
+`describedAdditionalInventoryStatus()` reevalúa la orden contra el inventario actual cada vez que se muestra:
+- suma disponibilidad de todas las coincidencias exactas;
+- marca `Material listo` únicamente si la cantidad disponible cubre la cantidad requerida;
+- calcula costo actual desde el inventario coincidente;
+- si el material se agrega al inventario después de crear la orden, no hay que editar la orden: al volver a verla se actualiza automáticamente.
+
+
+## Definiciones de producto
+Los tipos nuevos ya no son nombres sueltos.
+
+### Pallet / Crate estructural
+Al crear un tipo nuevo se guardan reglas y valores predeterminados: estructura runner/block/crate, 2-Way/4-Way, giro, notch, máximo por pila, largo/ancho, runner/base, cantidad de runners y tablas arriba/abajo. La definición inicializa el editor técnico sin impedir ajustes por orden.
+
+### Productos adicionales
+Cada tipo define un `schema`: `dimensional`, `weight`, `count`, `length` o `custom`, además de unidad predeterminada y si usa calidad.
+El mismo schema controla:
+1. cómo se describe en una orden;
+2. cómo se agrega al inventario;
+3. cómo se busca una coincidencia automática.
+
+Los productos no dimensionales viven en `genericInventory[]`; los dimensionales continúan usando `lumber[]` para conservar corte/conversión.
