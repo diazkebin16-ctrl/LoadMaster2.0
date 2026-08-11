@@ -363,3 +363,9 @@ body.dark .searchable-select-input{
 
 /* Unidades personalizadas */
 .product-fields-builder .small{margin-top:4px}
+
+/* Dirección del cliente + acceso al mapa */
+.address-picker-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.address-picker-row input{min-width:0;width:100%}
+.address-picker-row .btn{white-space:nowrap}
+@media(max-width:600px){.address-picker-row{grid-template-columns:1fr}.address-picker-row .btn{width:100%}}

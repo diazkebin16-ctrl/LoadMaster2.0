@@ -197,3 +197,10 @@ La creación de un producto ya no obliga a escoger combinaciones como “Por pes
 - Producto especial: cualquier combinación.
 
 La unidad predeterminada es independiente de los campos. Si el usuario necesita una nueva (`ton`, `rollo`, `galón`, etc.), se crea y queda reutilizable en Orden e Inventario.
+
+
+## Dirección del cliente y mapa
+Paso 1 guarda `customerAddress` en la orden y `address` como último valor del cliente.
+Al seleccionar un cliente existente se autocompleta su dirección guardada.
+`openAddressMap()` abre Google Maps con la dirección escrita actualmente, permitiendo verificarla antes de continuar.
+El historial conserva `customerAddress`.
