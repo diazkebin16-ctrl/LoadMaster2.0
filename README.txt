@@ -1,4 +1,4 @@
-Pallet Operations Platform — Prototype v0.20
+Pallet Operations Platform — Prototype v0.49
 
 Cambios principales de esta versión:
 - Se rehizo el módulo visual de especificaciones con planos SVG técnicos más legibles.
@@ -77,3 +77,58 @@ v0.30
 - La tarjeta Descargados hoy abre el historial del día y permite revisar el detalle completo de cada descarga.
 - Historial ahora permite cambiar entre Venta de pallets, Compra de madera y Descarga de tráilers.
 - Las recepciones de madera nuevas quedan registradas en el historial de compras.
+
+v0.34
+- Se agrega base de preferencias por cliente: control de calidad (QC), Heat Treatment (HT) y regla de retorno del tráiler.
+- Al crear una orden, QC y HT siguen apagados por defecto; pueden activarse por orden y guardarse como preferencia del cliente.
+- Las órdenes con QC/HT muestran la alerta durante Órdenes, Producción/Corte, Fabricación y Carga.
+- QC es opcional: no bloquea el flujo. Si se toca “Inspección QC realizada”, se registra fecha y nota; si no se toca, no se fuerza ningún paso.
+- Configuración incluye administración básica de preferencias por cliente.
+- Inventario agrega una categoría base para plywood / OSB / paneles con espesor, largo, ancho, cantidad, mínimo y costo unitario.
+- Desarme reciclado agrega rangos 20–50, 50–80 y 50–120 pulgadas y permite clasificar runners reciclados como 2-Way o 4-Way.
+- El material reciclado por rango sigue sin generar desperdicio al procesarse porque su largo exacto es desconocido.
+- Los runners reciclados 2-Way y 4-Way quedan diferenciados en inventario para evitar mezclarlos en órdenes recicladas.
+- Se restauraron funciones de historial mensual de desperdicio y conteo diario de desarme que podían faltar en la versión anterior.
+- La versión sigue siendo modo Administrador; se deja documentada la preparación futura para roles, ocultando precios/costos a perfiles no autorizados cuando se implemente autenticación.
+
+Pendiente para fases posteriores:
+- Flujo multiusuario real con inicio de sesión y permisos por rol.
+- Flujo completo de chofer/carga/entrega con firmas por etapa.
+- Optimizador de corte de madera por órdenes seleccionadas.
+- Optimizador global de plywood entre pedidos pendientes.
+- Asistente inteligente sobre historial y operación.
+
+
+v0.34
+- Corregido el menú lateral para permitir desplazamiento vertical cuando hay más módulos de los que caben en pantalla.
+- El pie del menú permanece visible y la lista de módulos se desplaza de forma independiente.
+- Mejorado el desplazamiento táctil en móvil.
+
+
+v0.34
+- Órdenes responsive: vista compacta y tarjetas automáticas en pantallas estrechas, sin desplazamiento horizontal.
+- Reacondicionado / reparación ya no solicita tablas, runners ni diseño de fabricación en la orden.
+- Nuevas calidades 48×40 A, 48×40 AA y 48×40 B.
+- A/AA/B quedan fijas como 48×40, 4-Way y con giro permitido; no solicitan tablas ni runners.
+- Especificación simplificada para condiciones que no requieren desglose de madera.
+
+v0.35
+- El editor inferior de posiciones ya permite arrastrar tarjetas libremente en móvil y escritorio.
+- Soltar una tarjeta en el centro de otra coloca ambas en la misma posición y registra una tabla doble; se muestra indicador ×2/×N.
+- Soltar hacia el borde izquierdo o derecho de otra tarjeta la mueve antes o después de esa posición.
+- Los botones de ajuste fino mantienen pasos exactos de 1/2 pulgada y ahora caben dentro de cada tarjeta.
+- La lista inferior deja de usar desplazamiento horizontal: las tarjetas se acomodan automáticamente en varias filas según el ancho disponible.
+- El dibujo superior conserva la protección contra superposición; la edición relajada y el apilado solo se realizan desde las tarjetas inferiores.
+- En tablas inferiores 4-Way se sigue respetando la restricción de no colocarlas sobre muescas.
+
+
+## v0.37
+- Nueva Orden: datos generales separados y restaurados: cliente, número de orden, referencia del cliente, fecha de entrega, horario de entrega, tipo de entrega, retorno y nota logística.
+- Se conservan QC y HT en el mismo bloque general de la orden.
+
+
+v0.49
+- Asistente IA V1 integrado con carga bajo demanda.
+- Herramientas reales de solo lectura para órdenes, inventario, producción y clientes.
+- Permisos, auditoría, timeout y cancelación.
+- LoadMaster permanece sin cambios.
