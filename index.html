@@ -1,66 +1,73 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0d5c4a" />
-  <title>Agregar orden — módulo independiente</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="module.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pallet Operations — Asistente IA Demo</title>
+  <link rel="stylesheet" href="./assistant.css">
+  <style>
+    body{margin:0;background:#f5f7fa;font-family:system-ui,-apple-system,sans-serif}
+    main{max-width:900px;margin:32px auto;padding:0 16px}
+    .demo-note{margin-bottom:12px;padding:10px 12px;background:#fff;border:1px solid #d7dce2;border-radius:10px;color:#4b5563}
+  </style>
 </head>
-<body class="order-module-mode">
-  <!--
-    Shell mínimo de compatibilidad para reutilizar exactamente el flujo de
-    Agregar orden de Pallet Operations v0.48. No expone los demás módulos.
-  -->
-  <div class="module-home" id="moduleHome">
-    <div class="module-home-card">
-      <div class="brand-mark">PO</div>
-      <h1>Módulo · Agregar orden</h1>
-      <p>Entorno independiente para trabajar únicamente el flujo Paso 1 + Paso 2.</p>
-      <button class="btn" id="openOrderModule">Abrir Agregar orden</button>
+<body>
+  <main>
+    <div class="demo-note">
+      <strong>Demo aislada:</strong> usa datos mock. No está conectada a Pallet Operations ni modifica datos reales.
     </div>
-  </div>
+    <div id="assistant"></div>
+  </main>
 
-  <div class="compat-shell" aria-hidden="true">
-    <aside class="sidebar" id="sidebar">
-      <nav><button class="nav-btn active" data-view="inicio">Inicio</button></nav>
-    </aside>
-    <main class="main">
-      <header class="topbar">
-        <button class="menu-btn" id="menuBtn">☰</button>
-        <div><h1 id="viewTitle">Agregar orden</h1><p id="viewSubtitle"></p></div>
-        <div class="top-actions">
-          <select id="themeQuick"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select>
-          <button id="resetDemo">↺</button>
-        </div>
-      </header>
-      <section id="content" class="content"></section>
-    </main>
-  </div>
+  <script type="module">
+    import { AIAssistant } from "./assistant-core.js";
+    import { AssistantUI } from "./assistant-ui.js";
+    import { registerMockTools } from "./mock-adapter.js";
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <dialog id="dialog" class="dialog">
-    <form method="dialog">
-      <div class="dialog-head">
-        <div><h2 id="dialogTitle"></h2><p id="dialogSubtitle"></p></div>
-        <div class="dialog-head-actions">
-          <label class="quick-theme dialog-theme" title="Apariencia">
-            <span>◐ Tema</span>
-            <select id="dialogThemeQuick" aria-label="Tema">
-              <option value="light">Claro</option>
-              <option value="dark">Oscuro</option>
-              <option value="system">Automático</option>
-            </select>
-          </label>
-          <button class="close-btn" value="cancel">×</button>
-        </div>
-      </div>
-      <div id="dialogBody"></div>
-    </form>
-  </dialog>
+    class DemoProvider {
+      async sendMessage({ message, executeTool }) {
+        const text = message.toLowerCase();
 
-  <script src="app.js"></script>
-  <script src="module.js"></script>
+        if (text.includes("orden") || text.includes("órden")) {
+          const result = await executeTool("getOrders", {});
+          return { type: "table", content: "Órdenes mock", data: result.data };
+        }
+
+        if (text.includes("inventario") || text.includes("material")) {
+          const lowOnly = text.includes("bajo") || text.includes("falt");
+          const result = await executeTool("searchInventory", { lowOnly });
+          return { type: "table", content: "Inventario mock", data: result.data };
+        }
+
+        if (text.includes("producción") || text.includes("produccion")) {
+          const result = await executeTool("getProductionRecords", {});
+          return { type: "table", content: "Producción mock", data: result.data };
+        }
+
+        if (text.includes("despacho")) {
+          const result = await executeTool("getOrders", { status: "ready_dispatch" });
+          return { type: "table", content: "Listos para despacho", data: result.data };
+        }
+
+        return {
+          type: "text",
+          content:
+            "Demo V1 activa con datos mock. Prueba preguntas como: " +
+            "\"muéstrame las órdenes\", \"inventario bajo\", " +
+            "\"producción\" o \"qué está listo para despacho\"."
+        };
+      }
+    }
+
+    const assistant = new AIAssistant({
+      providerInstance: new DemoProvider(),
+      user: { id: "github-demo", permissions: ["assistant:read"] },
+      timeoutMs: 20000,
+      toolTimeoutMs: 15000
+    });
+
+    registerMockTools(tool => assistant.registerTool(tool));
+    new AssistantUI({ assistant, container: "#assistant" });
+  </script>
 </body>
 </html>
