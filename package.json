@@ -1,0 +1,8 @@
+{
+  "name": "pallet-operations-ai-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Módulo aislado V1 de Asistente IA para Pallet Operations",
+  "scripts": { "test": "node tests.mjs" }
+}
