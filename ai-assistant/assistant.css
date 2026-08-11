@@ -1,0 +1,11 @@
+.po-ai{font-family:system-ui,-apple-system,sans-serif;border:1px solid #d7dce2;border-radius:12px;display:flex;flex-direction:column;min-height:520px;background:#fff;color:#1f2937}
+.po-ai__header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e5e7eb}
+.po-ai__header div{display:flex;flex-direction:column}.po-ai__header small{color:#6b7280}
+.po-ai__history{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.po-ai__message{max-width:88%;padding:10px 12px;border-radius:10px;white-space:pre-wrap;overflow:auto}
+.po-ai__message--user{align-self:flex-end;background:#e8eef8}.po-ai__message--assistant{align-self:flex-start;background:#f3f4f6}
+.po-ai__message--error,.po-ai__message--alert{align-self:stretch;background:#fff3cd}
+.po-ai__status{min-height:22px;padding:4px 16px;color:#6b7280;font-size:13px}
+.po-ai__composer{border-top:1px solid #e5e7eb;padding:12px}.po-ai__composer textarea{width:100%;box-sizing:border-box;resize:vertical;padding:10px}
+.po-ai__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}.po-ai button{padding:8px 12px;cursor:pointer}
+.po-ai table{border-collapse:collapse;width:100%}.po-ai th,.po-ai td{border-bottom:1px solid #ddd;text-align:left;padding:6px}

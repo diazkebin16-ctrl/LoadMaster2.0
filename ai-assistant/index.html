@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pallet Operations — Asistente IA Demo</title>
+  <link rel="stylesheet" href="./assistant.css">
+  <style>
+    body{margin:0;background:#f5f7fa;font-family:system-ui,-apple-system,sans-serif}
+    main{max-width:900px;margin:32px auto;padding:0 16px}
+    .demo-note{margin-bottom:12px;padding:10px 12px;background:#fff;border:1px solid #d7dce2;border-radius:10px;color:#4b5563}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="demo-note">
+      <strong>Demo aislada:</strong> usa datos mock. No está conectada a Pallet Operations ni modifica datos reales.
+    </div>
+    <div id="assistant"></div>
+  </main>
+
+  <script type="module">
+    import { AIAssistant } from "./assistant-core.js";
+    import { AssistantUI } from "./assistant-ui.js";
+    import { registerMockTools } from "./mock-adapter.js";
+
+    class DemoProvider {
+      async sendMessage({ message, executeTool }) {
+        const text = message.toLowerCase();
+
+        if (text.includes("orden") || text.includes("órden")) {
+          const result = await executeTool("getOrders", {});
+          return { type: "table", content: "Órdenes mock", data: result.data };
+        }
+
+        if (text.includes("inventario") || text.includes("material")) {
+          const lowOnly = text.includes("bajo") || text.includes("falt");
+          const result = await executeTool("searchInventory", { lowOnly });
+          return { type: "table", content: "Inventario mock", data: result.data };
+        }
+
+        if (text.includes("producción") || text.includes("produccion")) {
+          const result = await executeTool("getProductionRecords", {});
+          return { type: "table", content: "Producción mock", data: result.data };
+        }
+
+        if (text.includes("despacho")) {
+          const result = await executeTool("getOrders", { status: "ready_dispatch" });
+          return { type: "table", content: "Listos para despacho", data: result.data };
+        }
+
+        return {
+          type: "text",
+          content:
+            "Demo V1 activa con datos mock. Prueba preguntas como: " +
+            "\"muéstrame las órdenes\", \"inventario bajo\", " +
+            "\"producción\" o \"qué está listo para despacho\"."
+        };
+      }
+    }
+
+    const assistant = new AIAssistant({
+      providerInstance: new DemoProvider(),
+      user: { id: "github-demo", permissions: ["assistant:read"] },
+      timeoutMs: 20000,
+      toolTimeoutMs: 15000
+    });
+
+    registerMockTools(tool => assistant.registerTool(tool));
+    new AssistantUI({ assistant, container: "#assistant" });
+  </script>
+</body>
+</html>
